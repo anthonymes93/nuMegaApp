@@ -1,0 +1,98 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.req { color: var(--danger); margin-left: 2px; }
+
+.input, .textarea, .select {
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 7px 10px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.1s;
+  line-height: 1.5;
+}
+
+.textarea { resize: vertical; min-height: 68px; }
+
+.select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%237880a0' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  padding-right: 26px;
+  cursor: pointer;
+}
+
+.input:focus, .textarea:focus, .select:focus {
+  border-color: var(--border-focus);
+  outline: none;
+}
+
+.input::placeholder, .textarea::placeholder { color: var(--text-dim); }
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.btn {
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.primary:hover:not(:disabled) { background: #3a60e0; }
+
+.secondary {
+  background: var(--surface2);
+  color: var(--text-muted);
+  border-color: var(--border-strong);
+}
+.secondary:hover:not(:disabled) { color: var(--text); border-color: var(--text-dim); }
+
+.danger {
+  background: var(--danger-dim);
+  color: var(--danger);
+  border-color: transparent;
+}
+.danger:hover:not(:disabled) { background: var(--danger); color: #fff; }
+
+.ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.ghost:hover:not(:disabled) { color: var(--text); border-color: var(--text-dim); }

@@ -1,0 +1,91 @@
+.page { max-width: 860px; }
+
+.header { margin-bottom: 16px; }
+.title { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.2px; }
+.subtitle { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  background: none;
+  border: none;
+  padding: 7px 14px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 400;
+  border-bottom: 1px solid transparent;
+  margin-bottom: -1px;
+  text-transform: capitalize;
+  transition: color 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab:hover { color: var(--text); }
+.activeTab { color: var(--text); font-weight: 500; border-bottom-color: var(--accent); }
+.tabCount {
+  background: var(--surface3);
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 0 5px;
+  border-radius: 2px;
+}
+
+.list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+
+.card {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 11px 14px;
+  transition: background 0.1s;
+}
+.card:last-child { border-bottom: none; }
+.card:hover { background: var(--surface2); }
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.cardMeta { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.context {
+  font-size: 10px; font-weight: 500; color: var(--text-dim);
+  background: var(--surface3); padding: 1px 5px; border-radius: 2px;
+}
+
+.cardActions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.actionBtn {
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: var(--radius);
+  transition: all 0.1s;
+}
+.actionBtn:hover { color: var(--text); border-color: var(--text-dim); }
+.archiveBtn:hover { color: var(--danger); border-color: var(--danger-dim); }
+
+.cardTitle { font-size: 13.5px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+.cardBody { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 4px; }
+.nextMove { font-size: 12px; color: var(--accent); display: flex; align-items: center; gap: 3px; }
+.nextLabel { color: var(--text-dim); }
+.source { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+
+.form { display: flex; flex-direction: column; gap: 12px; }
+.convertTitle {
+  font-size: 13px; color: var(--text-muted); background: var(--surface2);
+  padding: 8px 12px; border-radius: var(--radius);
+  border-left: 2px solid var(--border-strong);
+}
+.convertHint { font-size: 12px; color: var(--text-dim); line-height: 1.5; }

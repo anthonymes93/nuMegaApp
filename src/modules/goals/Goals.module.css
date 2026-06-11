@@ -1,0 +1,51 @@
+.page { max-width: 900px; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+.title { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.2px; }
+.subtitle { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+
+.group { margin-bottom: 20px; }
+.groupHeader { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.horizon { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: capitalize; }
+.groupCount { font-size: 10.5px; color: var(--text-dim); background: var(--surface2); padding: 0 5px; border-radius: 2px; }
+
+.list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+
+.card {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: background 0.1s;
+}
+.card:last-child { border-bottom: none; }
+.card:hover { background: var(--surface2); }
+
+.cardTop { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.chips { display: flex; gap: 5px; align-items: center; }
+.venture { font-size: 10px; color: var(--text-dim); background: var(--surface3); padding: 1px 5px; border-radius: 2px; }
+
+.cardActions { display: flex; gap: 4px; }
+.actionBtn {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted);
+  font-size: 11px; padding: 3px 8px; border-radius: var(--radius); transition: all 0.1s;
+}
+.actionBtn:hover { color: var(--text); }
+.doneBtn {
+  background: var(--success-dim); border: none; color: var(--success);
+  font-size: 11px; padding: 3px 8px; border-radius: var(--radius); transition: all 0.1s;
+}
+.doneBtn:hover { background: var(--success); color: #fff; }
+.archiveBtn {
+  background: none; border: 1px solid var(--border); color: var(--text-dim);
+  font-size: 11px; padding: 3px 8px; border-radius: var(--radius); transition: all 0.1s;
+}
+.archiveBtn:hover { color: var(--danger); border-color: var(--danger-dim); }
+
+.cardTitle { font-size: 13.5px; font-weight: 500; color: var(--text); }
+.cardDesc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.next { font-size: 12px; color: var(--accent); }
+.noNext { font-size: 12px; color: var(--text-dim); }
+
+.form { display: flex; flex-direction: column; gap: 12px; }

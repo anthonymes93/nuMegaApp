@@ -1,0 +1,58 @@
+.page { max-width: 860px; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.title { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.2px; }
+.subtitle { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+
+.tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.tab {
+  background: none; border: none; padding: 7px 14px;
+  color: var(--text-muted); font-size: 12.5px; font-weight: 400;
+  border-bottom: 1px solid transparent; margin-bottom: -1px;
+  text-transform: capitalize; transition: color 0.1s; display: flex; align-items: center; gap: 6px;
+}
+.tab:hover { color: var(--text); }
+.activeTab { color: var(--text); font-weight: 500; border-bottom-color: var(--accent); }
+.tabCount { background: var(--surface3); color: var(--text-dim); font-size: 10px; padding: 0 5px; border-radius: 2px; }
+
+.list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+
+.card {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 13px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  transition: background 0.1s;
+}
+.card:last-child { border-bottom: none; }
+.card:hover { background: var(--surface2); }
+
+.cardTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.chips { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.ctx { font-size: 10px; color: var(--text-dim); background: var(--surface3); padding: 1px 5px; border-radius: 2px; }
+.venture { font-size: 10px; color: var(--text-dim); background: var(--surface3); padding: 1px 5px; border-radius: 2px; }
+
+.cardActions { display: flex; gap: 4px; flex-shrink: 0; }
+.actionBtn { background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); font-size: 11px; padding: 3px 8px; border-radius: var(--radius); transition: all 0.1s; }
+.actionBtn:hover { color: var(--text); }
+.reverseBtn { background: var(--danger-dim); border: none; color: var(--danger); font-size: 11px; padding: 3px 8px; border-radius: var(--radius); transition: all 0.1s; }
+.reverseBtn:hover { background: var(--danger); color: #fff; }
+.archiveBtn { background: none; border: 1px solid var(--border); color: var(--text-dim); font-size: 11px; padding: 3px 8px; border-radius: var(--radius); transition: all 0.1s; }
+.archiveBtn:hover { color: var(--danger); border-color: var(--danger-dim); }
+
+.cardTitle { font-size: 14px; font-weight: 500; color: var(--text); }
+
+.decisionBox {
+  background: var(--bg);
+  border-left: 2px solid var(--border-strong);
+  padding: 8px 12px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.decisionLabel { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; display: block; margin-bottom: 3px; }
+.decisionText { font-size: 13px; color: var(--text); line-height: 1.5; }
+
+.reasoning { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+.reasoningLabel { font-weight: 500; color: var(--text-dim); }
+
+.form { display: flex; flex-direction: column; gap: 12px; }

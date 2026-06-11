@@ -1,0 +1,16 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+}
+
+.clickable {
+  cursor: pointer;
+  transition: border-color 0.1s, background 0.1s;
+}
+
+.clickable:hover {
+  border-color: var(--border-strong);
+  background: var(--surface2);
+}

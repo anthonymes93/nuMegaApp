@@ -1,0 +1,31 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 3px;
+  font-weight: 500;
+  text-transform: capitalize;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1px;
+}
+
+.sm {
+  font-size: 10.5px;
+  padding: 1px 5px;
+  line-height: 16px;
+}
+
+.md {
+  font-size: 11px;
+  padding: 2px 7px;
+  line-height: 17px;
+}
+
+/* Most chips are neutral — color used only for semantic meaning */
+.default { background: var(--surface3); color: var(--text-muted); }
+.accent  { background: var(--accent-dim); color: var(--accent); }
+.success { background: var(--success-dim); color: var(--success); }
+.warning { background: var(--warning-dim); color: var(--warning); }
+.danger  { background: var(--danger-dim); color: var(--danger); }
+.info    { background: var(--info-dim); color: var(--info); }
+.purple  { background: var(--surface3); color: var(--text-muted); }

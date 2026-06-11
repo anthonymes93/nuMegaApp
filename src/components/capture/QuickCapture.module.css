@@ -1,0 +1,45 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0 12px;
+  height: 30px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  transition: border-color 0.1s, color 0.1s;
+}
+
+.trigger:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.triggerPlus {
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--text-dim);
+}
+
+.triggerText {
+  flex: 1;
+}
+
+.triggerKbd {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  background: var(--surface3);
+  border: 1px solid var(--border-strong);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: inherit;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
