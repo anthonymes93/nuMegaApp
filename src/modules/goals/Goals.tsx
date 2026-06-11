@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCollection } from '../../hooks/useCollection';
 import { COLLECTIONS } from '../../lib/firestore';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -84,6 +85,7 @@ function GoalCard({ goal, ventures, onEdit, onUpdate }: {
   onEdit: () => void;
   onUpdate: (d: Partial<Goal>) => void;
 }) {
+  const navigate = useNavigate();
   const venture = ventures.find((v) => v.id === goal.relatedVentureId);
 
   return (
@@ -101,7 +103,12 @@ function GoalCard({ goal, ventures, onEdit, onUpdate }: {
           <button className={styles.archiveBtn} onClick={() => onUpdate({ status: 'archived' })}>Archive</button>
         </div>
       </div>
-      <h3 className={styles.cardTitle}>{goal.title}</h3>
+      <button
+        className={styles.cardTitleLink}
+        onClick={() => navigate(`/goals/${goal.id}`)}
+      >
+        {goal.title} →
+      </button>
       {goal.description && <p className={styles.cardDesc}>{goal.description}</p>}
       {goal.nextMove ? (
         <div className={styles.next}>→ {goal.nextMove}</div>

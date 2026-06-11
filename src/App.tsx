@@ -6,6 +6,7 @@ import { Ideas } from './modules/ideas/Ideas';
 import { Ventures } from './modules/ventures/Ventures';
 import { VentureWorkspace } from './modules/ventures/VentureWorkspace';
 import { Goals } from './modules/goals/Goals';
+import { GoalWorkspace } from './modules/goals/GoalWorkspace';
 import { Tasks } from './modules/tasks/Tasks';
 import { Resources } from './modules/resources/Resources';
 import { Decisions } from './modules/decisions/Decisions';
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/ventures" element={<Ventures />} />
           <Route path="/ventures/:ventureId" element={<VentureWorkspace />} />
           <Route path="/goals" element={<Goals />} />
+          <Route path="/goals/:goalId" element={<GoalWorkspace />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/decisions" element={<Decisions />} />

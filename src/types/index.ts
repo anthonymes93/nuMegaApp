@@ -57,6 +57,7 @@ export interface Idea {
   potential: 'low' | 'medium' | 'high';
   nextMove?: string;
   relatedVentureId?: string;
+  relatedGoalId?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -71,6 +72,7 @@ export interface Venture {
   category: 'software' | 'service' | 'content' | 'contractor' | 'personal' | 'other';
   currentFocus?: string;
   nextMove?: string;
+  relatedGoalId?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -101,6 +103,7 @@ export interface Task {
   dueAt?: Timestamp;
   relatedType?: 'idea' | 'venture' | 'goal' | 'resource' | 'decision' | 'experiment';
   relatedId?: string;
+  relatedGoalId?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -117,6 +120,7 @@ export interface Resource {
   contextType: ContextType;
   nextMove?: string;
   relatedVentureId?: string;
+  relatedGoalId?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -129,6 +133,7 @@ export interface Decision {
   contextType: ContextType;
   relatedType?: string;
   relatedId?: string;
+  relatedGoalId?: string;
   status: 'active' | 'reversed' | 'archived';
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -143,6 +148,7 @@ export interface Experiment {
   status: ExperimentStatus;
   result?: string;
   relatedVentureId?: string;
+  relatedGoalId?: string;
   nextMove?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -155,6 +161,7 @@ export interface Relationship {
   notes?: string;
   nextAction?: string;
   relatedVentureId?: string;
+  relatedGoalId?: string;
   tags?: string[];
   sourceInboxId?: string;
   createdAt: Timestamp;

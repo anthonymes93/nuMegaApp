@@ -5,10 +5,11 @@ import { COLLECTIONS } from '../../lib/firestore';
 import { Modal } from '../../components/ui/Modal';
 import { FormField, FormRow, Input, Textarea, Select, FormActions, Btn } from '../../components/ui/FormField';
 import type {
+  Goal, GoalHorizon,
   Venture, VentureStatus,
-  Task, Idea, Goal, Resource, Decision, Experiment, Relationship,
+  Task, Idea, Resource, Decision, Experiment, Relationship,
 } from '../../types';
-import styles from './VentureWorkspace.module.css';
+import styles from './GoalWorkspace.module.css';
 
 function safeMillis(ts: unknown): number {
   if (!ts || typeof ts !== 'object') return 0;
@@ -19,29 +20,21 @@ function safeMillis(ts: unknown): number {
 function safeDate(ts: unknown): string {
   const ms = safeMillis(ts);
   if (!ms) return '—';
-  const d = new Date(ms);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function safeDateLong(ts: unknown): string {
   const ms = safeMillis(ts);
   if (!ms) return '—';
-  const d = new Date(ms);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
 function InlineEdit({
-  value,
-  placeholder,
-  onSave,
-  warn,
+  value, placeholder, onSave, warn,
 }: {
-  value: string;
-  placeholder: string;
-  onSave: (v: string) => void;
-  warn?: boolean;
+  value: string; placeholder: string; onSave: (v: string) => void; warn?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -50,10 +43,7 @@ function InlineEdit({
     if (!editing) setDraft(value);
   }, [value, editing]);
 
-  function commit() {
-    onSave(draft.trim());
-    setEditing(false);
-  }
+  function commit() { onSave(draft.trim()); setEditing(false); }
 
   if (editing) {
     return (
@@ -77,20 +67,13 @@ function InlineEdit({
       onClick={() => { setDraft(value); setEditing(true); }}
     >
       {value || <span className={styles.inlinePlaceholder}>{placeholder}</span>}
-      {' '}
-      <span className={styles.inlinePencil}>✎</span>
+      {' '}<span className={styles.inlinePencil}>✎</span>
     </button>
   );
 }
 
-function WorkspaceSection({
-  title,
-  count,
-  children,
-}: {
-  title: string;
-  count: number;
-  children: ReactNode;
+function WorkspaceSection({ title, count, children }: {
+  title: string; count: number; children: ReactNode;
 }) {
   return (
     <section className={styles.section}>
@@ -127,10 +110,7 @@ function ItemRow({ title, sub, extra }: { title: string; sub: string; extra?: st
   );
 }
 
-function QuickAddRow({
-  placeholder,
-  onAdd,
-}: {
+function QuickAddRow({ placeholder, onAdd }: {
   placeholder: string;
   onAdd: (title: string) => Promise<void>;
 }) {
@@ -141,14 +121,7 @@ function QuickAddRow({
     const t = value.trim();
     if (!t || saving) return;
     setSaving(true);
-    try {
-      await onAdd(t);
-      setValue('');
-    } catch {
-      // silent — item will remain in input for retry
-    } finally {
-      setSaving(false);
-    }
+    try { await onAdd(t); setValue(''); } catch { /* retain value for retry */ } finally { setSaving(false); }
   }
 
   return (
@@ -161,23 +134,14 @@ function QuickAddRow({
         onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
         disabled={saving}
       />
-      <button
-        className={styles.quickBtn}
-        onClick={handleAdd}
-        disabled={!value.trim() || saving}
-      >
+      <button className={styles.quickBtn} onClick={handleAdd} disabled={!value.trim() || saving}>
         {saving ? '…' : 'Add'}
       </button>
     </div>
   );
 }
 
-function ActivityRow({ type, title, sub, ts }: {
-  type: string;
-  title: string;
-  sub: string;
-  ts: unknown;
-}) {
+function ActivityRow({ type, title, sub, ts }: { type: string; title: string; sub: string; ts: unknown }) {
   return (
     <div className={styles.activityRow}>
       <span className={`${styles.activityType} ${styles[`at_${type}`]}`}>
@@ -190,69 +154,72 @@ function ActivityRow({ type, title, sub, ts }: {
   );
 }
 
-// ── Edit modal (duplicated from Ventures.tsx for self-containment) ──────────
+// ── Edit modal ──────────────────────────────────────────────────────────────
 
-function VentureEditModal({
-  venture,
-  onClose,
-  onSave,
-}: {
-  venture: Venture;
+function GoalEditModal({ goal, ventures, onClose, onSave }: {
+  goal: Goal;
+  ventures: Venture[];
   onClose: () => void;
-  onSave: (data: Partial<Venture>) => Promise<void>;
+  onSave: (data: Partial<Goal>) => Promise<void>;
 }) {
   const [form, setForm] = useState({
-    name: venture.name,
-    description: venture.description,
-    status: venture.status,
-    category: venture.category,
-    currentFocus: venture.currentFocus || '',
-    nextMove: venture.nextMove || '',
+    title: goal.title,
+    description: goal.description,
+    horizon: goal.horizon,
+    status: goal.status,
+    relatedVentureId: goal.relatedVentureId || '',
+    nextMove: goal.nextMove || '',
   });
   const [saving, setSaving] = useState(false);
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   async function handleSave() {
-    if (!form.name.trim()) return;
+    if (!form.title.trim()) return;
     setSaving(true);
-    await onSave(form as Partial<Venture>);
+    await onSave({ ...form, relatedVentureId: form.relatedVentureId || undefined } as Partial<Goal>);
     setSaving(false);
   }
 
   return (
-    <Modal open onClose={onClose} title="Edit Venture">
+    <Modal open onClose={onClose} title="Edit Goal">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <FormField label="Name" required>
-          <Input autoFocus value={form.name} onChange={(e) => set('name', e.target.value)} />
+        <FormField label="Goal" required>
+          <Input autoFocus value={form.title} onChange={(e) => set('title', e.target.value)} />
         </FormField>
         <FormField label="Description">
           <Textarea value={form.description} onChange={(e) => set('description', e.target.value)} />
         </FormField>
         <FormRow>
-          <FormField label="Status">
-            <Select value={form.status} onChange={(e) => set('status', e.target.value)}>
-              {(['seed','active','validating','launched','paused','archived'] as VentureStatus[]).map((s) => (
-                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+          <FormField label="Horizon">
+            <Select value={form.horizon} onChange={(e) => set('horizon', e.target.value)}>
+              {(['today','week','month','quarter','year','life'] as GoalHorizon[]).map((h) => (
+                <option key={h} value={h}>{h.charAt(0).toUpperCase() + h.slice(1)}</option>
               ))}
             </Select>
           </FormField>
-          <FormField label="Category">
-            <Select value={form.category} onChange={(e) => set('category', e.target.value)}>
-              {(['software','service','content','contractor','personal','other']).map((c) => (
-                <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
-              ))}
+          <FormField label="Status">
+            <Select value={form.status} onChange={(e) => set('status', e.target.value)}>
+              <option value="active">Active</option>
+              <option value="paused">Paused</option>
+              <option value="completed">Completed</option>
+              <option value="archived">Archived</option>
             </Select>
           </FormField>
         </FormRow>
-        <FormField label="Current Focus">
-          <Input value={form.currentFocus} onChange={(e) => set('currentFocus', e.target.value)} placeholder="What are you focused on?" />
+        <FormField label="Related Venture">
+          <Select value={form.relatedVentureId} onChange={(e) => set('relatedVentureId', e.target.value)}>
+            <option value="">None</option>
+            {ventures.filter((v) => v.status !== 'archived').map((v) => (
+              <option key={v.id} value={v.id}>{v.name}</option>
+            ))}
+          </Select>
         </FormField>
         <FormField label="Next Move">
-          <Input value={form.nextMove} onChange={(e) => set('nextMove', e.target.value)} placeholder="Immediate next step" />
+          <Input value={form.nextMove} onChange={(e) => set('nextMove', e.target.value)} placeholder="Concrete next step…" />
         </FormField>
         <FormActions>
           <Btn variant="secondary" onClick={onClose}>Cancel</Btn>
-          <Btn onClick={handleSave} disabled={!form.name.trim() || saving}>
+          <Btn onClick={handleSave} disabled={!form.title.trim() || saving}>
             {saving ? 'Saving…' : 'Save'}
           </Btn>
         </FormActions>
@@ -263,14 +230,14 @@ function VentureEditModal({
 
 // ── Main workspace ──────────────────────────────────────────────────────────
 
-export function VentureWorkspace() {
-  const { ventureId } = useParams<{ ventureId: string }>();
+export function GoalWorkspace() {
+  const { goalId } = useParams<{ goalId: string }>();
   const navigate = useNavigate();
 
-  const { items: allVentures, update: updateVenture } = useCollection<Venture>(COLLECTIONS.VENTURES);
+  const { items: allGoals, update: updateGoal } = useCollection<Goal>(COLLECTIONS.GOALS);
+  const { items: allVentures, add: addVenture } = useCollection<Venture>(COLLECTIONS.VENTURES);
   const { items: allTasks, add: addTask, update: updateTask } = useCollection<Task>(COLLECTIONS.TASKS);
   const { items: allIdeas, add: addIdea } = useCollection<Idea>(COLLECTIONS.IDEAS);
-  const { items: allGoals, add: addGoal } = useCollection<Goal>(COLLECTIONS.GOALS);
   const { items: allResources, add: addResource } = useCollection<Resource>(COLLECTIONS.RESOURCES);
   const { items: allDecisions, add: addDecision } = useCollection<Decision>(COLLECTIONS.DECISIONS);
   const { items: allExperiments, add: addExperiment } = useCollection<Experiment>(COLLECTIONS.EXPERIMENTS);
@@ -278,56 +245,53 @@ export function VentureWorkspace() {
 
   const [showEditModal, setShowEditModal] = useState(false);
 
-  if (!ventureId) return null;
+  if (!goalId) return null;
 
-  const venture = allVentures.find((v) => v.id === ventureId);
+  const goal = allGoals.find((g) => g.id === goalId);
 
-  if (allVentures.length === 0) {
+  if (allGoals.length === 0) {
     return (
       <div className={styles.page}>
-        <button className={styles.backBtn} onClick={() => navigate('/ventures')}>← Ventures</button>
+        <button className={styles.backBtn} onClick={() => navigate('/goals')}>← Goals</button>
         <p style={{ color: 'var(--text-dim)', fontSize: 13 }}>Loading…</p>
       </div>
     );
   }
 
-  if (!venture) {
+  if (!goal) {
     return (
       <div className={styles.notFound}>
-        <button className={styles.backBtn} onClick={() => navigate('/ventures')}>← Ventures</button>
-        <p>Venture not found.</p>
+        <button className={styles.backBtn} onClick={() => navigate('/goals')}>← Goals</button>
+        <p>Goal not found.</p>
       </div>
     );
   }
 
-  // Filter related items client-side
-  const tasks       = allTasks.filter((t) => t.relatedType === 'venture' && t.relatedId === ventureId);
-  const ideas       = allIdeas.filter((i) => i.relatedVentureId === ventureId);
-  const goals       = allGoals.filter((g) => g.relatedVentureId === ventureId);
-  const resources   = allResources.filter((r) => r.relatedVentureId === ventureId);
-  const decisions   = allDecisions.filter((d) => d.relatedType === 'venture' && d.relatedId === ventureId);
-  const experiments = allExperiments.filter((e) => e.relatedVentureId === ventureId);
-  const relations   = allRelationships.filter((r) => r.relatedVentureId === ventureId);
+  // Filter related items — all use relatedGoalId
+  const ventures     = allVentures.filter((v) => v.relatedGoalId === goalId);
+  const tasks        = allTasks.filter((t) => t.relatedGoalId === goalId);
+  const ideas        = allIdeas.filter((i) => i.relatedGoalId === goalId);
+  const resources    = allResources.filter((r) => r.relatedGoalId === goalId);
+  const decisions    = allDecisions.filter((d) => d.relatedGoalId === goalId);
+  const experiments  = allExperiments.filter((e) => e.relatedGoalId === goalId);
+  const relations    = allRelationships.filter((r) => r.relatedGoalId === goalId);
 
-  const activeTasks       = tasks.filter((t) => t.status !== 'archived');
-  const activeIdeas       = ideas.filter((i) => !['archived', 'parked'].includes(i.status));
-  const activeGoals       = goals.filter((g) => g.status === 'active');
-  const activeResources   = resources.filter((r) => r.status !== 'archived');
-  const activeDecisions   = decisions.filter((d) => d.status !== 'archived');
-  const activeExperiments = experiments.filter((e) => !['completed', 'abandoned'].includes(e.status));
+  const activeVentures     = ventures.filter((v) => v.status !== 'archived');
+  const activeTasks        = tasks.filter((t) => t.status !== 'archived');
+  const activeIdeas        = ideas.filter((i) => !['archived', 'parked'].includes(i.status));
+  const activeResources    = resources.filter((r) => r.status !== 'archived');
+  const activeDecisions    = decisions.filter((d) => d.status !== 'archived');
+  const activeExperiments  = experiments.filter((e) => !['completed', 'abandoned'].includes(e.status));
 
-  const totalLinked = activeTasks.length + activeIdeas.length + activeGoals.length +
+  const totalLinked = activeVentures.length + activeTasks.length + activeIdeas.length +
     activeResources.length + activeDecisions.length + activeExperiments.length + relations.length;
 
-  // Goal this venture is anchored to
-  const linkedGoal = allGoals.find((g) => g.id === venture.relatedGoalId);
-
-  // Activity: merge all linked objects, sort by createdAt desc, take top 12
+  // Activity: all linked objects sorted by createdAt desc, top 12
   type ActivityEntry = { id: string; type: string; title: string; sub: string; ts: unknown };
   const activity: ActivityEntry[] = [
+    ...ventures.map((v) => ({ id: v.id, type: 'venture', title: v.name, sub: v.status, ts: v.createdAt })),
     ...tasks.map((t) => ({ id: t.id, type: 'task', title: t.title, sub: t.status, ts: t.createdAt })),
     ...ideas.map((i) => ({ id: i.id, type: 'idea', title: i.title, sub: i.status, ts: i.createdAt })),
-    ...goals.map((g) => ({ id: g.id, type: 'goal', title: g.title, sub: g.horizon, ts: g.createdAt })),
     ...resources.map((r) => ({ id: r.id, type: 'resource', title: r.title, sub: r.resourceType, ts: r.createdAt })),
     ...decisions.map((d) => ({ id: d.id, type: 'decision', title: d.title, sub: d.status, ts: d.createdAt })),
     ...experiments.map((e) => ({ id: e.id, type: 'experiment', title: e.title, sub: e.status, ts: e.createdAt })),
@@ -336,27 +300,30 @@ export function VentureWorkspace() {
     .sort((a, b) => safeMillis(b.ts) - safeMillis(a.ts))
     .slice(0, 12);
 
+  // Linked venture (goal.relatedVentureId — the legacy "goal belongs to venture" link)
+  const parentVenture = allVentures.find((v) => v.id === goal.relatedVentureId);
+
   return (
     <div className={styles.page}>
-      <button className={styles.backBtn} onClick={() => navigate('/ventures')}>← Ventures</button>
+      <button className={styles.backBtn} onClick={() => navigate('/goals')}>← Goals</button>
 
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <div className={styles.headerTop}>
-            <h1 className={styles.ventureName}>{venture.name}</h1>
-            <span className={`${styles.statusBadge} ${styles[`status_${venture.status}`]}`}>
-              {venture.status}
+            <h1 className={styles.goalTitle}>{goal.title}</h1>
+            <span className={`${styles.horizonBadge} ${styles[`horizon_${goal.horizon}`]}`}>
+              {goal.horizon}
             </span>
-            <span className={styles.categoryBadge}>{venture.category}</span>
+            <span className={`${styles.statusBadge} ${styles[`status_${goal.status}`]}`}>
+              {goal.status}
+            </span>
           </div>
-          {venture.description && (
-            <p className={styles.ventureDesc}>{venture.description}</p>
-          )}
+          {goal.description && <p className={styles.goalDesc}>{goal.description}</p>}
           <div className={styles.headerMeta}>
-            <span>Created {safeDateLong(venture.createdAt)}</span>
+            <span>Created {safeDateLong(goal.createdAt)}</span>
             <span className={styles.metaSep}>·</span>
-            <span>Updated {safeDateLong(venture.updatedAt)}</span>
+            <span>Updated {safeDateLong(goal.updatedAt)}</span>
             <span className={styles.metaSep}>·</span>
             <span className={styles.metaCount}>{totalLinked} linked item{totalLinked !== 1 ? 's' : ''}</span>
           </div>
@@ -366,33 +333,25 @@ export function VentureWorkspace() {
         </div>
       </div>
 
-      {/* Focus + Next Move inline editing */}
+      {/* Next Move + parent venture inline */}
       <div className={styles.focusBar}>
-        <div className={styles.focusRow}>
-          <span className={styles.focusLabel}>Focus</span>
-          <InlineEdit
-            value={venture.currentFocus || ''}
-            placeholder="Set current focus…"
-            onSave={(v) => updateVenture(venture.id, { currentFocus: v })}
-          />
-        </div>
         <div className={styles.focusRow}>
           <span className={styles.focusLabel}>Next Move</span>
           <InlineEdit
-            value={venture.nextMove || ''}
-            placeholder="Set next move — empty = stuck in Mission Control"
-            onSave={(v) => updateVenture(venture.id, { nextMove: v })}
+            value={goal.nextMove || ''}
+            placeholder="Set next move — empty = stalled in Mission Control"
+            onSave={(v) => updateGoal(goal.id, { nextMove: v })}
             warn
           />
         </div>
-        {linkedGoal && (
+        {parentVenture && (
           <div className={styles.focusRow}>
-            <span className={styles.focusLabel}>Goal</span>
+            <span className={styles.focusLabel}>Venture</span>
             <button
-              className={styles.goalLink}
-              onClick={() => navigate(`/goals/${linkedGoal.id}`)}
+              className={styles.ventureLink}
+              onClick={() => navigate(`/ventures/${parentVenture.id}`)}
             >
-              {linkedGoal.title} ({linkedGoal.horizon}) →
+              {parentVenture.name} →
             </button>
           </div>
         )}
@@ -401,10 +360,27 @@ export function VentureWorkspace() {
       {/* Sections */}
       <div className={styles.sections}>
 
+        <WorkspaceSection title="Ventures" count={activeVentures.length}>
+          {activeVentures.length === 0 && <p className={styles.emptySection}>No ventures linked yet.</p>}
+          {activeVentures.map((v) => (
+            <ItemRow key={v.id} title={v.name} sub={v.status} extra={v.nextMove} />
+          ))}
+          <QuickAddRow
+            placeholder="Add venture name…"
+            onAdd={(title) =>
+              addVenture({
+                name: title,
+                description: '',
+                status: 'seed' as VentureStatus,
+                category: 'other',
+                relatedGoalId: goalId,
+              } as Omit<Venture, 'id' | 'createdAt' | 'updatedAt'>)
+            }
+          />
+        </WorkspaceSection>
+
         <WorkspaceSection title="Tasks" count={activeTasks.length}>
-          {activeTasks.length === 0 && (
-            <p className={styles.emptySection}>No tasks yet.</p>
-          )}
+          {activeTasks.length === 0 && <p className={styles.emptySection}>No tasks yet.</p>}
           {activeTasks.map((t) => (
             <TaskRow
               key={t.id}
@@ -419,17 +395,14 @@ export function VentureWorkspace() {
                 title,
                 status: 'todo',
                 priority: 'medium',
-                relatedType: 'venture',
-                relatedId: ventureId,
+                relatedGoalId: goalId,
               } as Omit<Task, 'id' | 'createdAt' | 'updatedAt'>)
             }
           />
         </WorkspaceSection>
 
         <WorkspaceSection title="Ideas" count={activeIdeas.length}>
-          {activeIdeas.length === 0 && (
-            <p className={styles.emptySection}>No ideas yet.</p>
-          )}
+          {activeIdeas.length === 0 && <p className={styles.emptySection}>No ideas yet.</p>}
           {activeIdeas.map((i) => (
             <ItemRow key={i.id} title={i.title} sub={i.status} />
           ))}
@@ -442,58 +415,33 @@ export function VentureWorkspace() {
                 contextType: 'business',
                 status: 'raw',
                 potential: 'medium',
-                relatedVentureId: ventureId,
+                relatedGoalId: goalId,
               } as Omit<Idea, 'id' | 'createdAt' | 'updatedAt'>)
             }
           />
         </WorkspaceSection>
 
-        <WorkspaceSection title="Goals" count={activeGoals.length}>
-          {activeGoals.length === 0 && (
-            <p className={styles.emptySection}>No goals yet.</p>
-          )}
-          {activeGoals.map((g) => (
-            <ItemRow key={g.id} title={g.title} sub={g.horizon} />
-          ))}
-          <QuickAddRow
-            placeholder="Add goal…"
-            onAdd={(title) =>
-              addGoal({
-                title,
-                description: '',
-                horizon: 'quarter',
-                status: 'active',
-                relatedVentureId: ventureId,
-              } as Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>)
-            }
-          />
-        </WorkspaceSection>
-
         <WorkspaceSection title="Resources" count={activeResources.length}>
-          {activeResources.length === 0 && (
-            <p className={styles.emptySection}>No resources yet.</p>
-          )}
+          {activeResources.length === 0 && <p className={styles.emptySection}>No resources yet.</p>}
           {activeResources.map((r) => (
             <ItemRow key={r.id} title={r.title} sub={r.resourceType} extra={r.url} />
           ))}
           <QuickAddRow
-            placeholder="Add resource (title or URL)…"
+            placeholder="Add resource…"
             onAdd={(title) =>
               addResource({
                 title,
                 resourceType: 'other',
                 status: 'saved',
                 contextType: 'business',
-                relatedVentureId: ventureId,
+                relatedGoalId: goalId,
               } as Omit<Resource, 'id' | 'createdAt' | 'updatedAt'>)
             }
           />
         </WorkspaceSection>
 
         <WorkspaceSection title="Decisions" count={activeDecisions.length}>
-          {activeDecisions.length === 0 && (
-            <p className={styles.emptySection}>No decisions logged yet.</p>
-          )}
+          {activeDecisions.length === 0 && <p className={styles.emptySection}>No decisions logged yet.</p>}
           {activeDecisions.map((d) => (
             <ItemRow key={d.id} title={d.title} sub={d.status} extra={d.reasoning} />
           ))}
@@ -505,17 +453,14 @@ export function VentureWorkspace() {
                 decision: title,
                 contextType: 'business',
                 status: 'active',
-                relatedType: 'venture',
-                relatedId: ventureId,
+                relatedGoalId: goalId,
               } as Omit<Decision, 'id' | 'createdAt' | 'updatedAt'>)
             }
           />
         </WorkspaceSection>
 
         <WorkspaceSection title="Experiments" count={activeExperiments.length}>
-          {activeExperiments.length === 0 && (
-            <p className={styles.emptySection}>No experiments yet.</p>
-          )}
+          {activeExperiments.length === 0 && <p className={styles.emptySection}>No experiments yet.</p>}
           {activeExperiments.map((e) => (
             <ItemRow key={e.id} title={e.title} sub={e.status} />
           ))}
@@ -526,16 +471,14 @@ export function VentureWorkspace() {
                 title,
                 hypothesis: title,
                 status: 'idea',
-                relatedVentureId: ventureId,
+                relatedGoalId: goalId,
               } as Omit<Experiment, 'id' | 'createdAt' | 'updatedAt'>)
             }
           />
         </WorkspaceSection>
 
         <WorkspaceSection title="Relationships" count={relations.length}>
-          {relations.length === 0 && (
-            <p className={styles.emptySection}>No contacts linked yet.</p>
-          )}
+          {relations.length === 0 && <p className={styles.emptySection}>No contacts linked yet.</p>}
           {relations.map((r) => (
             <ItemRow key={r.id} title={r.name} sub={r.role || '—'} extra={r.nextAction} />
           ))}
@@ -544,30 +487,30 @@ export function VentureWorkspace() {
             onAdd={(title) =>
               addRelationship({
                 name: title,
-                relatedVentureId: ventureId,
+                relatedGoalId: goalId,
               } as Omit<Relationship, 'id' | 'createdAt' | 'updatedAt'>)
             }
           />
         </WorkspaceSection>
 
         <WorkspaceSection title="Activity" count={activity.length}>
-          {activity.length === 0 ? (
-            <p className={styles.emptySection}>No activity yet. Add items above to get started.</p>
-          ) : (
-            activity.map((a) => (
-              <ActivityRow key={`${a.type}-${a.id}`} type={a.type} title={a.title} sub={a.sub} ts={a.ts} />
-            ))
-          )}
+          {activity.length === 0
+            ? <p className={styles.emptySection}>No activity yet. Add items above to get started.</p>
+            : activity.map((a) => (
+                <ActivityRow key={`${a.type}-${a.id}`} type={a.type} title={a.title} sub={a.sub} ts={a.ts} />
+              ))
+          }
         </WorkspaceSection>
 
       </div>
 
       {showEditModal && (
-        <VentureEditModal
-          venture={venture}
+        <GoalEditModal
+          goal={goal}
+          ventures={allVentures}
           onClose={() => setShowEditModal(false)}
           onSave={async (data) => {
-            await updateVenture(venture.id, data);
+            await updateGoal(goal.id, data);
             setShowEditModal(false);
           }}
         />

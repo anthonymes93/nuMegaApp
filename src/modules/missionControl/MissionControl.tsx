@@ -47,6 +47,16 @@ export function MissionControl() {
     [goals]
   );
 
+  const goalsInMotion = useMemo(
+    () => goals.filter((g) => {
+      if (g.status !== 'active') return false;
+      return ventures.some(
+        (v) => v.relatedGoalId === g.id && ['active', 'validating', 'launched'].includes(v.status)
+      );
+    }),
+    [goals, ventures]
+  );
+
   const openDecisions = useMemo(
     () => decisions.filter((d) => d.status === 'active' && !d.reasoning),
     [decisions]
@@ -140,6 +150,21 @@ export function MissionControl() {
               <span className={styles.rowTitle}>{t.title}</span>
               <span className={`${styles.priorityTag} ${styles[`p_${t.priority}`]}`}>{t.priority}</span>
               <span className={`${styles.statusTag}`}>{t.status}</span>
+            </Row>
+          ))}
+        </AttentionPanel>
+
+        <AttentionPanel
+          title="Goals In Motion"
+          count={goalsInMotion.length}
+          nav="/goals"
+          hint="Active goals with a linked active venture"
+        >
+          {goalsInMotion.length === 0 ? <Empty /> : goalsInMotion.slice(0, 6).map((g) => (
+            <Row key={g.id}>
+              <span className={styles.rowTitle}>{g.title}</span>
+              <span className={styles.horizonTag}>{g.horizon}</span>
+              <span className={styles.motionTag}>in motion</span>
             </Row>
           ))}
         </AttentionPanel>
