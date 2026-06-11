@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { QueryConstraint } from 'firebase/firestore';
+import type { QueryConstraint } from 'firebase/firestore';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument } from '../lib/firestore';
 
 export function useCollection<T>(collectionName: string, constraints: QueryConstraint[] = []) {

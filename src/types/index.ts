@@ -20,7 +20,8 @@ export type InboxType =
   | 'decision'
   | 'experiment'
   | 'goal'
-  | 'venture_note';
+  | 'venture_note'
+  | 'relationship';
 
 export type Urgency = 'low' | 'medium' | 'high';
 
@@ -28,13 +29,19 @@ export interface InboxItem {
   id: string;
   title: string;
   body: string;
+  rawInput?: string;
   type: InboxType;
+  possibleType?: InboxType;
+  confidence?: 'low' | 'medium' | 'high';
+  tags?: string[];
   contextType: ContextType;
   contextId?: string;
   status: 'captured' | 'reviewed' | 'converted' | 'archived';
   urgency: Urgency;
   nextMove?: string;
   source?: string;
+  processedAt?: Timestamp;
+  convertedTo?: { type: string; id: string };
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -136,6 +143,19 @@ export interface Experiment {
   result?: string;
   relatedVentureId?: string;
   nextMove?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Relationship {
+  id: string;
+  name: string;
+  role?: string;
+  notes?: string;
+  nextAction?: string;
+  relatedVentureId?: string;
+  tags?: string[];
+  sourceInboxId?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

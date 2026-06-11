@@ -9,6 +9,7 @@ import { Tasks } from './modules/tasks/Tasks';
 import { Resources } from './modules/resources/Resources';
 import { Decisions } from './modules/decisions/Decisions';
 import { Experiments } from './modules/experiments/Experiments';
+import { Relationships } from './modules/relationships/Relationships';
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/resources" element={<Resources />} />
           <Route path="/decisions" element={<Decisions />} />
           <Route path="/experiments" element={<Experiments />} />
+          <Route path="/relationships" element={<Relationships />} />
         </Route>
       </Routes>
     </BrowserRouter>

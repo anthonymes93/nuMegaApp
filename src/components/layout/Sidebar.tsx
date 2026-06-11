@@ -11,6 +11,7 @@ const NAV = [
   { to: '/resources', label: 'Resources', end: false },
   { to: '/decisions', label: 'Decisions', end: false },
   { to: '/experiments', label: 'Experiments', end: false },
+  { to: '/relationships', label: 'Relationships', end: false },
 ];
 
 export function Sidebar() {

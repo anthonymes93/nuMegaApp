@@ -22,6 +22,7 @@ export const COLLECTIONS = {
   RESOURCES: 'megaResources',
   DECISIONS: 'megaDecisions',
   EXPERIMENTS: 'megaExperiments',
+  RELATIONSHIPS: 'megaRelationships',
 } as const;
 
 export async function addDocument(collectionName: string, data: DocumentData) {

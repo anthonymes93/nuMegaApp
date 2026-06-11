@@ -3,48 +3,66 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useCollection } from '../../hooks/useCollection';
 import { COLLECTIONS } from '../../lib/firestore';
-import { StatusChip, PriorityChip, UrgencyChip } from '../../components/ui/Chip';
-import type { InboxItem, Task, Venture, Goal, Resource, Decision, Idea } from '../../types';
+import type { InboxItem, Task, Venture, Goal, Decision, Relationship, Idea, Experiment } from '../../types';
 import styles from './MissionControl.module.css';
 
 export function MissionControl() {
-  const { items: inbox } = useCollection<InboxItem>(COLLECTIONS.INBOX);
-  const { items: tasks } = useCollection<Task>(COLLECTIONS.TASKS);
-  const { items: ventures } = useCollection<Venture>(COLLECTIONS.VENTURES);
-  const { items: goals } = useCollection<Goal>(COLLECTIONS.GOALS);
-  const { items: resources } = useCollection<Resource>(COLLECTIONS.RESOURCES);
-  const { items: decisions } = useCollection<Decision>(COLLECTIONS.DECISIONS);
-  const { items: ideas } = useCollection<Idea>(COLLECTIONS.IDEAS);
+  const { items: inbox }         = useCollection<InboxItem>(COLLECTIONS.INBOX);
+  const { items: tasks }         = useCollection<Task>(COLLECTIONS.TASKS);
+  const { items: ventures }      = useCollection<Venture>(COLLECTIONS.VENTURES);
+  const { items: goals }         = useCollection<Goal>(COLLECTIONS.GOALS);
+  const { items: decisions }     = useCollection<Decision>(COLLECTIONS.DECISIONS);
+  const { items: relationships } = useCollection<Relationship>(COLLECTIONS.RELATIONSHIPS);
+  const { items: ideas }         = useCollection<Idea>(COLLECTIONS.IDEAS);
+  const { items: experiments }   = useCollection<Experiment>(COLLECTIONS.EXPERIMENTS);
 
-  const todayTasks = useMemo(
+  const now = Date.now();
+  const fourteenDays = 14 * 24 * 60 * 60 * 1000;
+
+  const inboxQueue = useMemo(
+    () => inbox.filter((i) => i.status === 'captured'),
+    [inbox]
+  );
+
+  const staleTasks = useMemo(
+    () => tasks.filter(
+      (t) => (t.status === 'todo' || t.status === 'doing') &&
+        t.createdAt?.toMillis?.() < now - fourteenDays
+    ),
+    [tasks, now]
+  );
+
+  const activeTasks = useMemo(
     () => tasks.filter((t) => t.status === 'todo' || t.status === 'doing'),
     [tasks]
   );
-  const highUrgencyInbox = useMemo(
-    () => inbox.filter((i) => i.urgency === 'high' && i.status !== 'archived' && i.status !== 'converted'),
-    [inbox]
-  );
-  const activeVentures = useMemo(
-    () => ventures.filter((v) => v.status === 'active' || v.status === 'validating'),
+
+  const stuckVentures = useMemo(
+    () => ventures.filter((v) => (v.status === 'active' || v.status === 'validating') && !v.nextMove),
     [ventures]
   );
-  const activeGoals = useMemo(() => goals.filter((g) => g.status === 'active'), [goals]);
-  const activeIdeas = useMemo(
-    () => ideas.filter((i) => i.status === 'testing' || i.status === 'launching'),
-    [ideas]
+
+  const stuckGoals = useMemo(
+    () => goals.filter((g) => g.status === 'active' && !g.nextMove),
+    [goals]
   );
-  const studyingResources = useMemo(() => resources.filter((r) => r.status === 'studying'), [resources]);
-  const recentDecisions = useMemo(
-    () => decisions.filter((d) => d.status === 'active').slice(0, 5),
+
+  const openDecisions = useMemo(
+    () => decisions.filter((d) => d.status === 'active' && !d.reasoning),
     [decisions]
   );
 
+  const followUps = useMemo(
+    () => relationships.filter((r) => r.nextAction),
+    [relationships]
+  );
+
   const stuckPotential = useMemo(() => {
-    const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
     const items: { id: string; type: string; title: string; reason: string }[] = [];
     inbox
-      .filter((i) => i.status === 'captured' && !i.nextMove)
-      .forEach((i) => items.push({ id: i.id, type: 'Inbox', title: i.title, reason: 'No next move' }));
+      .filter((i) => i.status === 'captured' && !i.nextMove &&
+        i.createdAt?.toMillis?.() < now - fourteenDays)
+      .forEach((i) => items.push({ id: i.id, type: 'Inbox', title: i.title, reason: 'Unprocessed 14d+' }));
     ideas
       .filter((i) => !['archived', 'parked', 'launching'].includes(i.status) && !i.nextMove)
       .forEach((i) => items.push({ id: i.id, type: 'Idea', title: i.title, reason: 'No next move' }));
@@ -54,16 +72,18 @@ export function MissionControl() {
     goals
       .filter((g) => g.status === 'active' && !g.nextMove)
       .forEach((g) => items.push({ id: g.id, type: 'Goal', title: g.title, reason: 'No next move' }));
-    tasks
-      .filter((t) => t.status === 'todo' && t.createdAt?.toMillis?.() < twoWeeksAgo)
-      .forEach((t) => items.push({ id: t.id, type: 'Task', title: t.title, reason: 'Untouched 14d+' }));
-    return items.slice(0, 20);
-  }, [inbox, ideas, ventures, goals, tasks]);
+    experiments
+      .filter((e) => e.status === 'running' && !e.nextMove)
+      .forEach((e) => items.push({ id: e.id, type: 'Experiment', title: e.title, reason: 'No next move' }));
+    return items.slice(0, 25);
+  }, [inbox, ideas, ventures, goals, experiments, now]);
+
+  const totalAttention = inboxQueue.length + staleTasks.length + stuckVentures.length +
+    stuckGoals.length + openDecisions.length + followUps.length;
 
   return (
     <div className={styles.page}>
 
-      {/* Command header */}
       <div className={styles.commandHeader}>
         <div className={styles.commandLeft}>
           <div className={styles.commandTitle}>
@@ -71,113 +91,120 @@ export function MissionControl() {
             <span className={styles.commandSep}>/</span>
             <span className={styles.commandPage}>Mission Control</span>
           </div>
-          <span className={styles.commandTagline}>Stored potential → directed motion.</span>
+          <span className={styles.commandTagline}>
+            {totalAttention === 0
+              ? 'All clear — nothing needs attention right now.'
+              : `${totalAttention} item${totalAttention !== 1 ? 's' : ''} need${totalAttention === 1 ? 's' : ''} your attention.`}
+          </span>
         </div>
-        <span className={styles.commandDate}>{format(new Date(), "EEE MMM d")}</span>
+        <span className={styles.commandDate}>{format(new Date(), 'EEE MMM d')}</span>
       </div>
 
       {/* Stats strip */}
       <div className={styles.statsStrip}>
-        <StatItem label="Open Tasks" value={todayTasks.length} />
-        <span className={styles.statSep} />
-        <StatItem label="High Urgency" value={highUrgencyInbox.length} warn={highUrgencyInbox.length > 0} />
-        <span className={styles.statSep} />
-        <StatItem label="Active Ventures" value={activeVentures.length} />
-        <span className={styles.statSep} />
-        <StatItem label="Active Goals" value={activeGoals.length} />
-        <span className={styles.statSep} />
-        <StatItem label="Ideas in Motion" value={activeIdeas.length} />
-        <span className={styles.statSep} />
-        <StatItem label="Stuck" value={stuckPotential.length} warn={stuckPotential.length > 0} />
+        <StatItem label="Inbox Queue" value={inboxQueue.length} warn={inboxQueue.length > 0} nav="/inbox" />
+        <StatItem label="Active Tasks" value={activeTasks.length} nav="/tasks" />
+        <StatItem label="Active Ventures" value={ventures.filter((v) => v.status === 'active').length} nav="/ventures" />
+        <StatItem label="Active Goals" value={goals.filter((g) => g.status === 'active').length} nav="/goals" />
+        <StatItem label="Stuck Items" value={stuckPotential.length} warn={stuckPotential.length > 0} />
+        <StatItem label="Follow-ups" value={followUps.length} warn={followUps.length > 0} nav="/relationships" />
       </div>
 
-      {/* Main grid */}
+      {/* Attention grid */}
       <div className={styles.grid}>
-        <Panel title="Open Tasks" count={todayTasks.length} nav="/tasks">
-          {todayTasks.length === 0
-            ? <Empty />
-            : todayTasks.slice(0, 8).map((t) => (
-                <Row key={t.id}>
-                  <span className={styles.rowTitle}>{t.title}</span>
-                  <PriorityChip priority={t.priority} />
-                  <StatusChip status={t.status} />
-                </Row>
-              ))}
-        </Panel>
 
-        <Panel title="High Urgency Inbox" count={highUrgencyInbox.length} nav="/inbox">
-          {highUrgencyInbox.length === 0
-            ? <Empty />
-            : highUrgencyInbox.slice(0, 8).map((i) => (
-                <Row key={i.id}>
-                  <span className={styles.rowTitle}>{i.title}</span>
-                  <UrgencyChip urgency={i.urgency} />
-                  {i.nextMove && <span className={styles.rowNext}>→ {i.nextMove}</span>}
-                </Row>
-              ))}
-        </Panel>
+        <AttentionPanel
+          title="Inbox Queue"
+          count={inboxQueue.length}
+          nav="/inbox"
+          warn={inboxQueue.length > 0}
+          hint="Items captured, not yet processed"
+        >
+          {inboxQueue.length === 0 ? <Empty /> : inboxQueue.slice(0, 8).map((i) => (
+            <Row key={i.id}>
+              <span className={styles.rowTitle}>{i.title}</span>
+              {i.possibleType && i.possibleType !== 'unclassified' && (
+                <TypeTag type={i.possibleType} />
+              )}
+            </Row>
+          ))}
+        </AttentionPanel>
 
-        <Panel title="Active Ventures" count={activeVentures.length} nav="/ventures">
-          {activeVentures.length === 0
-            ? <Empty />
-            : activeVentures.map((v) => (
-                <Row key={v.id}>
-                  <span className={styles.rowTitle}>{v.name}</span>
-                  <StatusChip status={v.status} />
-                  {v.nextMove && <span className={styles.rowNext}>→ {v.nextMove}</span>}
-                </Row>
-              ))}
-        </Panel>
+        <AttentionPanel
+          title="Active Tasks"
+          count={activeTasks.length}
+          nav="/tasks"
+        >
+          {activeTasks.length === 0 ? <Empty /> : activeTasks.slice(0, 8).map((t) => (
+            <Row key={t.id}>
+              <span className={styles.rowTitle}>{t.title}</span>
+              <span className={`${styles.priorityTag} ${styles[`p_${t.priority}`]}`}>{t.priority}</span>
+              <span className={`${styles.statusTag}`}>{t.status}</span>
+            </Row>
+          ))}
+        </AttentionPanel>
 
-        <Panel title="Active Goals" count={activeGoals.length} nav="/goals">
-          {activeGoals.length === 0
-            ? <Empty />
-            : activeGoals.slice(0, 8).map((g) => (
-                <Row key={g.id}>
-                  <span className={styles.rowTitle}>{g.title}</span>
-                  <StatusChip status={g.horizon} />
-                  {g.nextMove && <span className={styles.rowNext}>→ {g.nextMove}</span>}
-                </Row>
-              ))}
-        </Panel>
+        <AttentionPanel
+          title="Stuck Ventures"
+          count={stuckVentures.length}
+          nav="/ventures"
+          warn={stuckVentures.length > 0}
+          hint="Active ventures with no next move"
+        >
+          {stuckVentures.length === 0 ? <Empty /> : stuckVentures.map((v) => (
+            <Row key={v.id}>
+              <span className={styles.rowTitle}>{v.name}</span>
+              <span className={styles.stuckTag}>no next move</span>
+            </Row>
+          ))}
+        </AttentionPanel>
 
-        <Panel title="Ideas in Motion" count={activeIdeas.length} nav="/ideas">
-          {activeIdeas.length === 0
-            ? <Empty />
-            : activeIdeas.map((i) => (
-                <Row key={i.id}>
-                  <span className={styles.rowTitle}>{i.title}</span>
-                  <StatusChip status={i.status} />
-                  {i.nextMove && <span className={styles.rowNext}>→ {i.nextMove}</span>}
-                </Row>
-              ))}
-        </Panel>
+        <AttentionPanel
+          title="Stalled Goals"
+          count={stuckGoals.length}
+          nav="/goals"
+          warn={stuckGoals.length > 0}
+          hint="Active goals with no next move"
+        >
+          {stuckGoals.length === 0 ? <Empty /> : stuckGoals.map((g) => (
+            <Row key={g.id}>
+              <span className={styles.rowTitle}>{g.title}</span>
+              <span className={styles.horizonTag}>{g.horizon}</span>
+            </Row>
+          ))}
+        </AttentionPanel>
 
-        <Panel title="Studying" count={studyingResources.length} nav="/resources">
-          {studyingResources.length === 0
-            ? <Empty />
-            : studyingResources.map((r) => (
-                <Row key={r.id}>
-                  <span className={styles.rowTitle}>{r.title}</span>
-                  <StatusChip status={r.resourceType} />
-                  {r.nextMove && <span className={styles.rowNext}>→ {r.nextMove}</span>}
-                </Row>
-              ))}
-        </Panel>
+        <AttentionPanel
+          title="Decisions Pending Reasoning"
+          count={openDecisions.length}
+          nav="/decisions"
+          warn={openDecisions.length > 0}
+        >
+          {openDecisions.length === 0 ? <Empty /> : openDecisions.slice(0, 6).map((d) => (
+            <Row key={d.id}>
+              <span className={styles.rowTitle}>{d.title}</span>
+              <span className={styles.decisionText}>{d.decision}</span>
+            </Row>
+          ))}
+        </AttentionPanel>
 
-        <Panel title="Recent Decisions" count={recentDecisions.length} nav="/decisions" span={2}>
-          {recentDecisions.length === 0
-            ? <Empty />
-            : recentDecisions.map((d) => (
-                <Row key={d.id}>
-                  <span className={styles.rowTitle}>{d.title}</span>
-                  <span className={styles.rowDecision}>{d.decision}</span>
-                </Row>
-              ))}
-        </Panel>
+        <AttentionPanel
+          title="Relationship Follow-ups"
+          count={followUps.length}
+          nav="/relationships"
+          warn={followUps.length > 0}
+        >
+          {followUps.length === 0 ? <Empty /> : followUps.slice(0, 6).map((r) => (
+            <Row key={r.id}>
+              <span className={styles.rowTitle}>{r.name}</span>
+              <span className={styles.followUpText}>{r.nextAction}</span>
+            </Row>
+          ))}
+        </AttentionPanel>
+
       </div>
 
-      {/* Stuck Potential */}
+      {/* Stuck Potential table */}
       <div className={`${styles.stuckPanel} ${stuckPotential.length === 0 ? styles.stuckClear : ''}`}>
         <div className={styles.stuckHeader}>
           <div className={styles.stuckLeft}>
@@ -187,7 +214,7 @@ export function MissionControl() {
           <span className={styles.stuckMeta}>
             {stuckPotential.length === 0
               ? 'All items have a next move.'
-              : `${stuckPotential.length} item${stuckPotential.length !== 1 ? 's' : ''} with no next move assigned.`}
+              : `${stuckPotential.length} item${stuckPotential.length !== 1 ? 's' : ''} with no next move or stale.`}
           </span>
         </div>
         {stuckPotential.length > 0 && (
@@ -202,9 +229,7 @@ export function MissionControl() {
             <tbody>
               {stuckPotential.map((s) => (
                 <tr key={`${s.type}-${s.id}`} className={styles.stuckTr}>
-                  <td className={styles.stuckTd}>
-                    <span className={styles.stuckType}>{s.type}</span>
-                  </td>
+                  <td className={styles.stuckTd}><span className={styles.stuckType}>{s.type}</span></td>
                   <td className={`${styles.stuckTd} ${styles.stuckTitle}`}>{s.title}</td>
                   <td className={`${styles.stuckTd} ${styles.stuckReason}`}>{s.reason}</td>
                 </tr>
@@ -218,28 +243,29 @@ export function MissionControl() {
   );
 }
 
-function Panel({
-  title, count, nav, children, span,
+/* ── Sub-components ─────────────────────────────────── */
+
+function AttentionPanel({
+  title, count, nav, warn, hint, children,
 }: {
   title: string;
   count: number;
   nav?: string;
+  warn?: boolean;
+  hint?: string;
   children: React.ReactNode;
-  span?: number;
 }) {
   const navigate = useNavigate();
   return (
-    <section
-      className={styles.panel}
-      style={span ? { gridColumn: `span ${span}` } : undefined}
-    >
+    <section className={`${styles.panel} ${warn && count > 0 ? styles.panelWarn : ''}`}>
       <div className={styles.panelHeader}>
-        <span className={styles.panelTitle}>{title}</span>
+        <div className={styles.panelHeaderLeft}>
+          <span className={styles.panelTitle}>{title}</span>
+          {hint && <span className={styles.panelHint}>{hint}</span>}
+        </div>
         <div className={styles.panelMeta}>
-          <span className={styles.panelCount}>{count}</span>
-          {nav && (
-            <button className={styles.panelNav} onClick={() => navigate(nav)}>→</button>
-          )}
+          <span className={`${styles.panelCount} ${warn && count > 0 ? styles.panelCountWarn : ''}`}>{count}</span>
+          {nav && <button className={styles.panelNav} onClick={() => navigate(nav)}>→</button>}
         </div>
       </div>
       <div className={styles.panelBody}>{children}</div>
@@ -255,12 +281,25 @@ function Empty() {
   return <p className={styles.empty}>—</p>;
 }
 
-function StatItem({ label, value, warn }: { label: string; value: number; warn?: boolean }) {
+function TypeTag({ type }: { type: string }) {
+  return <span className={`${styles.typeTag} ${styles[`tt_${type}`]}`}>{type.replace('_', ' ')}</span>;
+}
+
+function StatItem({
+  label, value, warn, nav,
+}: {
+  label: string;
+  value: number;
+  warn?: boolean;
+  nav?: string;
+}) {
+  const navigate = useNavigate();
   return (
-    <div className={styles.statItem}>
-      <span className={`${styles.statVal} ${warn && value > 0 ? styles.statWarn : ''}`}>
-        {value}
-      </span>
+    <div
+      className={`${styles.statItem} ${nav ? styles.statClickable : ''}`}
+      onClick={nav ? () => navigate(nav) : undefined}
+    >
+      <span className={`${styles.statVal} ${warn && value > 0 ? styles.statWarn : ''}`}>{value}</span>
       <span className={styles.statLabel}>{label}</span>
     </div>
   );

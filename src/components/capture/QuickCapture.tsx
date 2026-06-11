@@ -1,26 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Modal } from '../ui/Modal';
-import { FormField, FormRow, Input, Textarea, Select, FormActions, Btn } from '../ui/FormField';
+import { Btn } from '../ui/FormField';
 import { useCollection } from '../../hooks/useCollection';
 import { COLLECTIONS } from '../../lib/firestore';
-import type { InboxItem, InboxType, ContextType, Urgency } from '../../types';
+import { classify } from '../../lib/classifier';
+import type { InboxItem } from '../../types';
 import styles from './QuickCapture.module.css';
 
-const defaultForm = {
-  title: '',
-  body: '',
-  type: 'unclassified' as InboxType,
-  contextType: 'general' as ContextType,
-  urgency: 'low' as Urgency,
-  nextMove: '',
-  source: '',
-};
+const MAX_CAPTURE_LENGTH = 500;
 
 export function QuickCapture() {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState(defaultForm);
+  const [rawInput, setRawInput] = useState('');
+  const [body, setBody] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { add } = useCollection<InboxItem>(COLLECTIONS.INBOX);
+
+  const classification = useMemo(
+    () => (rawInput.trim().length > 2 ? classify(rawInput) : null),
+    [rawInput]
+  );
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -33,25 +35,45 @@ export function QuickCapture() {
     return () => document.removeEventListener('keydown', handler);
   }, []);
 
-  const set = (k: keyof typeof defaultForm, v: string) =>
-    setForm((f) => ({ ...f, [k]: v }));
+  // Cleanup close timer on unmount
+  useEffect(() => () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+  }, []);
+
+  function handleClose() {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    setOpen(false);
+    setSaved(false);
+    setRawInput('');
+    setBody('');
+    setShowDetails(false);
+    setSaving(false);
+  }
 
   async function handleSave() {
-    if (!form.title.trim()) return;
+    const trimmed = rawInput.trim();
+    if (!trimmed || saving || saved) return;
     setSaving(true);
-    await add({
-      title: form.title.trim(),
-      body: form.body.trim(),
-      type: form.type,
-      contextType: form.contextType,
-      status: 'captured',
-      urgency: form.urgency,
-      nextMove: form.nextMove.trim() || undefined,
-      source: form.source.trim() || undefined,
-    } as Omit<InboxItem, 'id' | 'createdAt' | 'updatedAt'>);
-    setForm(defaultForm);
-    setSaving(false);
-    setOpen(false);
+    try {
+      await add({
+        title: trimmed,
+        rawInput: trimmed,
+        body: body.trim(),
+        type: 'unclassified',
+        possibleType: classification?.possibleType ?? 'unclassified',
+        confidence: classification?.confidence ?? 'low',
+        tags: classification?.tags ?? [],
+        contextType: 'general',
+        status: 'captured',
+        urgency: 'low',
+      } as Omit<InboxItem, 'id' | 'createdAt' | 'updatedAt'>);
+      setSaved(true);
+      closeTimerRef.current = setTimeout(handleClose, 600);
+    } catch {
+      // Firestore error — let user retry
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -62,81 +84,73 @@ export function QuickCapture() {
         <span className={styles.triggerKbd}>⌘K</span>
       </button>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Capture">
+      <Modal open={open} onClose={handleClose} title="Capture">
         <div className={styles.form}>
-          <FormField label="Title" required>
-            <Input
-              autoFocus
-              placeholder="What needs to be captured?"
-              value={form.title}
-              onChange={(e) => set('title', e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && e.metaKey) handleSave(); }}
+          <textarea
+            className={styles.rawInput}
+            autoFocus
+            placeholder="Capture anything — thought, task, idea, contact, link…"
+            value={rawInput}
+            rows={2}
+            maxLength={MAX_CAPTURE_LENGTH}
+            onChange={(e) => setRawInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSave();
+              }
+            }}
+          />
+
+          {rawInput.length > MAX_CAPTURE_LENGTH * 0.9 && (
+            <p className={styles.charCount}>
+              {rawInput.length} / {MAX_CAPTURE_LENGTH}
+            </p>
+          )}
+
+          {classification && classification.possibleType !== 'unclassified' && (
+            <div className={styles.hint}>
+              <span className={styles.hintLabel}>Detected:</span>
+              <span className={`${styles.hintType} ${styles[`type_${classification.possibleType}`]}`}>
+                {classification.possibleType.replace('_', ' ').toUpperCase()}
+              </span>
+              <span className={styles.hintDots}>
+                {'▪'.repeat(classification.confidence === 'high' ? 3 : classification.confidence === 'medium' ? 2 : 1)}
+                {'○'.repeat(classification.confidence === 'high' ? 0 : classification.confidence === 'medium' ? 1 : 2)}
+              </span>
+              <span className={styles.hintConf}>{classification.confidence}</span>
+            </div>
+          )}
+
+          {showDetails && (
+            <textarea
+              className={styles.detailInput}
+              placeholder="Context, URL, or additional details…"
+              value={body}
+              rows={3}
+              onChange={(e) => setBody(e.target.value)}
             />
-          </FormField>
-          <FormField label="Notes">
-            <Textarea
-              placeholder="Context, URL, or details…"
-              value={form.body}
-              onChange={(e) => set('body', e.target.value)}
-            />
-          </FormField>
-          <FormRow>
-            <FormField label="Type">
-              <Select value={form.type} onChange={(e) => set('type', e.target.value)}>
-                <option value="unclassified">Unclassified</option>
-                <option value="idea">Idea</option>
-                <option value="task">Task</option>
-                <option value="resource">Resource</option>
-                <option value="decision">Decision</option>
-                <option value="experiment">Experiment</option>
-                <option value="goal">Goal</option>
-                <option value="venture_note">Venture Note</option>
-              </Select>
-            </FormField>
-            <FormField label="Urgency">
-              <Select value={form.urgency} onChange={(e) => set('urgency', e.target.value)}>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </Select>
-            </FormField>
-          </FormRow>
-          <FormRow>
-            <FormField label="Context">
-              <Select value={form.contextType} onChange={(e) => set('contextType', e.target.value)}>
-                <option value="general">General</option>
-                <option value="personal">Personal</option>
-                <option value="business">Business</option>
-                <option value="anthonyos">AnthonyOS</option>
-                <option value="contractor_os">Contractor OS</option>
-                <option value="megaapp">MegaApp</option>
-                <option value="client">Client</option>
-                <option value="learning">Learning</option>
-                <option value="health">Health</option>
-                <option value="money">Money</option>
-              </Select>
-            </FormField>
-            <FormField label="Source">
-              <Input
-                placeholder="Origin"
-                value={form.source}
-                onChange={(e) => set('source', e.target.value)}
-              />
-            </FormField>
-          </FormRow>
-          <FormField label="Next Move">
-            <Input
-              placeholder="Immediate next step"
-              value={form.nextMove}
-              onChange={(e) => set('nextMove', e.target.value)}
-            />
-          </FormField>
-          <FormActions>
-            <Btn variant="secondary" onClick={() => setOpen(false)}>Cancel</Btn>
-            <Btn onClick={handleSave} disabled={!form.title.trim() || saving}>
-              {saving ? 'Saving…' : 'Capture'}
-            </Btn>
-          </FormActions>
+          )}
+
+          <div className={styles.formBottom}>
+            <button
+              type="button"
+              className={styles.detailsToggle}
+              onClick={() => setShowDetails((v) => !v)}
+            >
+              {showDetails ? '▲ Less' : '▼ Add context'}
+            </button>
+            <div className={styles.formActions}>
+              <Btn variant="secondary" onClick={handleClose}>Cancel</Btn>
+              <Btn
+                onClick={handleSave}
+                disabled={!rawInput.trim() || saving || saved}
+                className={saved ? styles.savedBtn : ''}
+              >
+                {saved ? '✓ Captured' : saving ? 'Saving…' : 'Capture ↵'}
+              </Btn>
+            </div>
+          </div>
         </div>
       </Modal>
     </>
