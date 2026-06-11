@@ -116,6 +116,7 @@ export interface Resource {
   status: 'saved' | 'studying' | 'applied' | 'archived';
   contextType: ContextType;
   nextMove?: string;
+  relatedVentureId?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

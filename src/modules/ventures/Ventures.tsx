@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCollection } from '../../hooks/useCollection';
 import { COLLECTIONS } from '../../lib/firestore';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -91,6 +92,7 @@ function VentureCard({
   onEdit: () => void;
   onUpdate: (d: Partial<Venture>) => void;
 }) {
+  const navigate = useNavigate();
   const { items: tasks } = useCollection<Task>(COLLECTIONS.TASKS);
   const { items: ideas } = useCollection<Idea>(COLLECTIONS.IDEAS);
   const { items: experiments } = useCollection<Experiment>(COLLECTIONS.EXPERIMENTS);
@@ -122,7 +124,12 @@ function VentureCard({
       <div className={styles.cardMain} onClick={onToggle}>
         <div className={styles.cardLeft}>
           <div className={styles.cardHeader}>
-            <h3 className={styles.cardName}>{venture.name}</h3>
+            <button
+            className={styles.cardNameLink}
+            onClick={(e) => { e.stopPropagation(); navigate(`/ventures/${venture.id}`); }}
+          >
+            {venture.name} →
+          </button>
             <StatusChip status={venture.category} />
           </div>
           {venture.description && <p className={styles.cardDesc}>{venture.description}</p>}

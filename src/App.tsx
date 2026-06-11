@@ -4,6 +4,7 @@ import { MissionControl } from './modules/missionControl/MissionControl';
 import { Inbox } from './modules/inbox/Inbox';
 import { Ideas } from './modules/ideas/Ideas';
 import { Ventures } from './modules/ventures/Ventures';
+import { VentureWorkspace } from './modules/ventures/VentureWorkspace';
 import { Goals } from './modules/goals/Goals';
 import { Tasks } from './modules/tasks/Tasks';
 import { Resources } from './modules/resources/Resources';
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/inbox" element={<Inbox />} />
           <Route path="/ideas" element={<Ideas />} />
           <Route path="/ventures" element={<Ventures />} />
+          <Route path="/ventures/:ventureId" element={<VentureWorkspace />} />
           <Route path="/goals" element={<Goals />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/resources" element={<Resources />} />
