@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { QuickCapture } from '../capture/QuickCapture';
+import { CommandCenter } from '../commandCenter/CommandCenter';
 import styles from './AppShell.module.css';
 
 export function AppShell() {
@@ -15,6 +16,7 @@ export function AppShell() {
           <Outlet />
         </div>
       </div>
+      <CommandCenter />
     </div>
   );
 }

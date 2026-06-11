@@ -1,10 +1,23 @@
 import { useState } from 'react';
+import { Timestamp } from 'firebase/firestore';
 import { useCollection } from '../../hooks/useCollection';
 import { COLLECTIONS } from '../../lib/firestore';
 import { Modal } from '../../components/ui/Modal';
 import { FormField, FormRow, Input, Textarea, Select, FormActions, Btn } from '../../components/ui/FormField';
 import type { Relationship, Venture } from '../../types';
 import styles from './Relationships.module.css';
+
+function tsToDate(ts: unknown): string {
+  if (!ts || typeof ts !== 'object') return '';
+  const ms = (ts as { toMillis?: () => number }).toMillis?.();
+  if (!ms) return '';
+  return new Date(ms).toISOString().split('T')[0];
+}
+
+function dateToTs(s: string): Timestamp | undefined {
+  if (!s) return undefined;
+  return Timestamp.fromDate(new Date(s));
+}
 
 export function Relationships() {
   const { items, add, update, remove } = useCollection<Relationship>(COLLECTIONS.RELATIONSHIPS);
@@ -57,6 +70,9 @@ export function Relationships() {
               {rel.nextAction && (
                 <p className={styles.nextAction}>
                   <span className={styles.nextLabel}>Follow up:</span> {rel.nextAction}
+                  {rel.nextActionDate && (
+                    <span className={styles.nextDate}> · {tsToDate(rel.nextActionDate)}</span>
+                  )}
                 </p>
               )}
               {rel.tags && rel.tags.length > 0 && (
@@ -105,6 +121,7 @@ function RelationshipModal({
     role: initial?.role ?? '',
     notes: initial?.notes ?? '',
     nextAction: initial?.nextAction ?? '',
+    nextActionDate: tsToDate(initial?.nextActionDate),
     relatedVentureId: initial?.relatedVentureId ?? '',
   });
   const [saving, setSaving] = useState(false);
@@ -118,6 +135,7 @@ function RelationshipModal({
       role: form.role.trim() || undefined,
       notes: form.notes.trim() || undefined,
       nextAction: form.nextAction.trim() || undefined,
+      nextActionDate: dateToTs(form.nextActionDate),
       relatedVentureId: form.relatedVentureId || undefined,
     });
     setSaving(false);
@@ -150,13 +168,22 @@ function RelationshipModal({
             placeholder="Context about this person"
           />
         </FormField>
-        <FormField label="Follow-up / Next action">
-          <Input
-            value={form.nextAction}
-            onChange={(e) => set('nextAction', e.target.value)}
-            placeholder="What do you need to do with this contact?"
-          />
-        </FormField>
+        <FormRow>
+          <FormField label="Follow-up / Next action">
+            <Input
+              value={form.nextAction}
+              onChange={(e) => set('nextAction', e.target.value)}
+              placeholder="What do you need to do with this contact?"
+            />
+          </FormField>
+          <FormField label="Follow-up date">
+            <Input
+              type="date"
+              value={form.nextActionDate}
+              onChange={(e) => set('nextActionDate', e.target.value)}
+            />
+          </FormField>
+        </FormRow>
         <FormField label="Venture">
           <Select value={form.relatedVentureId} onChange={(e) => set('relatedVentureId', e.target.value)}>
             <option value="">No venture</option>

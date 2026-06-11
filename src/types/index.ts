@@ -1,5 +1,18 @@
 import { Timestamp } from 'firebase/firestore';
 
+export type AttentionSeverity = 'low' | 'medium' | 'high';
+
+export interface AttentionItem {
+  id: string;
+  type: 'venture' | 'goal' | 'relationship' | 'idea' | 'decision';
+  severity: AttentionSeverity;
+  title: string;
+  reason: string;
+  actionLabel: string;
+  targetRoute: string;
+  createdAt: number; // millis — derived from source object, used for sorting and age display
+}
+
 export type ContextType =
   | 'general'
   | 'personal'
@@ -160,6 +173,7 @@ export interface Relationship {
   role?: string;
   notes?: string;
   nextAction?: string;
+  nextActionDate?: Timestamp;
   relatedVentureId?: string;
   relatedGoalId?: string;
   tags?: string[];

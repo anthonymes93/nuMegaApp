@@ -3,6 +3,7 @@ import styles from './Sidebar.module.css';
 
 const NAV = [
   { to: '/', label: 'Mission Control', end: true },
+  { to: '/attention', label: 'Attention', end: false },
   { to: '/inbox', label: 'Inbox', end: false },
   { to: '/ideas', label: 'Ideas', end: false },
   { to: '/ventures', label: 'Ventures', end: false },

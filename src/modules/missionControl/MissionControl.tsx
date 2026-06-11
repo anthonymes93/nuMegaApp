@@ -2,11 +2,13 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useCollection } from '../../hooks/useCollection';
+import { useAttentionItems } from '../../hooks/useAttentionItems';
 import { COLLECTIONS } from '../../lib/firestore';
-import type { InboxItem, Task, Venture, Goal, Decision, Relationship, Idea, Experiment } from '../../types';
+import type { InboxItem, Task, Venture, Goal, Decision, Relationship, Idea } from '../../types';
 import styles from './MissionControl.module.css';
 
 export function MissionControl() {
+  const navigate = useNavigate();
   const { items: inbox }         = useCollection<InboxItem>(COLLECTIONS.INBOX);
   const { items: tasks }         = useCollection<Task>(COLLECTIONS.TASKS);
   const { items: ventures }      = useCollection<Venture>(COLLECTIONS.VENTURES);
@@ -14,7 +16,7 @@ export function MissionControl() {
   const { items: decisions }     = useCollection<Decision>(COLLECTIONS.DECISIONS);
   const { items: relationships } = useCollection<Relationship>(COLLECTIONS.RELATIONSHIPS);
   const { items: ideas }         = useCollection<Idea>(COLLECTIONS.IDEAS);
-  const { items: experiments }   = useCollection<Experiment>(COLLECTIONS.EXPERIMENTS);
+  const attention = useAttentionItems();
 
   const now = Date.now();
   const fourteenDays = 14 * 24 * 60 * 60 * 1000;
@@ -67,26 +69,15 @@ export function MissionControl() {
     [relationships]
   );
 
-  const stuckPotential = useMemo(() => {
-    const items: { id: string; type: string; title: string; reason: string }[] = [];
-    inbox
-      .filter((i) => i.status === 'captured' && !i.nextMove &&
-        i.createdAt?.toMillis?.() < now - fourteenDays)
-      .forEach((i) => items.push({ id: i.id, type: 'Inbox', title: i.title, reason: 'Unprocessed 14d+' }));
-    ideas
-      .filter((i) => !['archived', 'parked', 'launching'].includes(i.status) && !i.nextMove)
-      .forEach((i) => items.push({ id: i.id, type: 'Idea', title: i.title, reason: 'No next move' }));
-    ventures
-      .filter((v) => v.status === 'active' && !v.nextMove)
-      .forEach((v) => items.push({ id: v.id, type: 'Venture', title: v.name, reason: 'No next move' }));
-    goals
-      .filter((g) => g.status === 'active' && !g.nextMove)
-      .forEach((g) => items.push({ id: g.id, type: 'Goal', title: g.title, reason: 'No next move' }));
-    experiments
-      .filter((e) => e.status === 'running' && !e.nextMove)
-      .forEach((e) => items.push({ id: e.id, type: 'Experiment', title: e.title, reason: 'No next move' }));
-    return items.slice(0, 25);
-  }, [inbox, ideas, ventures, goals, experiments, now]);
+  const topAttention = useMemo(() => {
+    const sevOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+    return [...attention]
+      .sort((a, b) => {
+        const diff = sevOrder[a.severity] - sevOrder[b.severity];
+        return diff !== 0 ? diff : b.createdAt - a.createdAt;
+      })
+      .slice(0, 10);
+  }, [attention]);
 
   const totalAttention = inboxQueue.length + staleTasks.length + stuckVentures.length +
     stuckGoals.length + openDecisions.length + followUps.length;
@@ -116,7 +107,7 @@ export function MissionControl() {
         <StatItem label="Active Tasks" value={activeTasks.length} nav="/tasks" />
         <StatItem label="Active Ventures" value={ventures.filter((v) => v.status === 'active').length} nav="/ventures" />
         <StatItem label="Active Goals" value={goals.filter((g) => g.status === 'active').length} nav="/goals" />
-        <StatItem label="Stuck Items" value={stuckPotential.length} warn={stuckPotential.length > 0} />
+        <StatItem label="Attention" value={attention.length} warn={attention.length > 0} nav="/attention" />
         <StatItem label="Follow-ups" value={followUps.length} warn={followUps.length > 0} nav="/relationships" />
       </div>
 
@@ -229,34 +220,47 @@ export function MissionControl() {
 
       </div>
 
-      {/* Stuck Potential table */}
-      <div className={`${styles.stuckPanel} ${stuckPotential.length === 0 ? styles.stuckClear : ''}`}>
+      {/* Attention Required panel */}
+      <div className={`${styles.stuckPanel} ${attention.length === 0 ? styles.stuckClear : ''}`}>
         <div className={styles.stuckHeader}>
           <div className={styles.stuckLeft}>
-            <span className={styles.stuckLabel}>STUCK POTENTIAL</span>
-            <span className={styles.stuckCount}>{stuckPotential.length}</span>
+            <span className={styles.stuckLabel}>ATTENTION REQUIRED</span>
+            <span className={styles.stuckCount}>{attention.length}</span>
           </div>
-          <span className={styles.stuckMeta}>
-            {stuckPotential.length === 0
-              ? 'All items have a next move.'
-              : `${stuckPotential.length} item${stuckPotential.length !== 1 ? 's' : ''} with no next move or stale.`}
-          </span>
+          <div className={styles.stuckMeta}>
+            {attention.length === 0
+              ? 'All clear.'
+              : <button className={styles.stuckViewAll} onClick={() => navigate('/attention')}>View all {attention.length} →</button>}
+          </div>
         </div>
-        {stuckPotential.length > 0 && (
+        {topAttention.length > 0 && (
           <table className={styles.stuckTable}>
             <thead>
               <tr>
+                <th className={styles.stuckTh}>Sev</th>
                 <th className={styles.stuckTh}>Type</th>
-                <th className={styles.stuckTh}>Title</th>
+                <th className={styles.stuckTh}>Item</th>
                 <th className={styles.stuckTh}>Reason</th>
               </tr>
             </thead>
             <tbody>
-              {stuckPotential.map((s) => (
-                <tr key={`${s.type}-${s.id}`} className={styles.stuckTr}>
-                  <td className={styles.stuckTd}><span className={styles.stuckType}>{s.type}</span></td>
-                  <td className={`${styles.stuckTd} ${styles.stuckTitle}`}>{s.title}</td>
-                  <td className={`${styles.stuckTd} ${styles.stuckReason}`}>{s.reason}</td>
+              {topAttention.map((item) => (
+                <tr
+                  key={item.id}
+                  className={styles.stuckTr}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => navigate(item.targetRoute)}
+                >
+                  <td className={styles.stuckTd}>
+                    <span className={`${styles.attentionSev} ${styles[`sev_${item.severity}`]}`}>
+                      {item.severity.slice(0, 3).toUpperCase()}
+                    </span>
+                  </td>
+                  <td className={styles.stuckTd}>
+                    <span className={styles.stuckType}>{item.type}</span>
+                  </td>
+                  <td className={`${styles.stuckTd} ${styles.stuckTitle}`}>{item.title}</td>
+                  <td className={`${styles.stuckTd} ${styles.stuckReason}`}>{item.reason}</td>
                 </tr>
               ))}
             </tbody>

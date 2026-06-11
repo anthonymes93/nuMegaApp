@@ -12,6 +12,7 @@ import { Resources } from './modules/resources/Resources';
 import { Decisions } from './modules/decisions/Decisions';
 import { Experiments } from './modules/experiments/Experiments';
 import { Relationships } from './modules/relationships/Relationships';
+import { Attention } from './modules/attention/Attention';
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/decisions" element={<Decisions />} />
           <Route path="/experiments" element={<Experiments />} />
           <Route path="/relationships" element={<Relationships />} />
+          <Route path="/attention" element={<Attention />} />
         </Route>
       </Routes>
     </BrowserRouter>

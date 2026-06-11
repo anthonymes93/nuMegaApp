@@ -220,3 +220,17 @@
 
 .stuckTitle  { color: var(--text); font-size: 13px; }
 .stuckReason { color: var(--text-dim); font-size: 11.5px; }
+
+.stuckViewAll {
+  font-size: 11.5px; color: var(--accent);
+  padding: 0; cursor: pointer;
+}
+.stuckViewAll:hover { text-decoration: underline; }
+
+.attentionSev {
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.4px; padding: 1px 4px; border-radius: 2px;
+}
+.sev_high   { color: var(--danger); background: rgba(204,51,51,0.08); }
+.sev_medium { color: var(--warning); background: rgba(200,136,10,0.08); }
+.sev_low    { color: var(--text-dim); background: var(--surface3); }

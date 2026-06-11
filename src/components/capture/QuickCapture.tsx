@@ -25,14 +25,9 @@ export function QuickCapture() {
   );
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setOpen(true);
-      }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
+    const handler = () => setOpen(true);
+    window.addEventListener('megaapp:open-capture', handler as EventListener);
+    return () => window.removeEventListener('megaapp:open-capture', handler as EventListener);
   }, []);
 
   // Cleanup close timer on unmount
