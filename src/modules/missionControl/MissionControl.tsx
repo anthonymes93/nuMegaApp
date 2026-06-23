@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { useCollection } from '../../hooks/useCollection';
 import { useAttentionItems } from '../../hooks/useAttentionItems';
 import { COLLECTIONS } from '../../lib/firestore';
-import type { InboxItem, Task, Venture, Goal, Decision, Relationship, Idea } from '../../types';
+import type { InboxItem, Task, Venture, Goal, Decision, Relationship } from '../../types';
 import styles from './MissionControl.module.css';
 
 export function MissionControl() {
@@ -15,7 +15,6 @@ export function MissionControl() {
   const { items: goals }         = useCollection<Goal>(COLLECTIONS.GOALS);
   const { items: decisions }     = useCollection<Decision>(COLLECTIONS.DECISIONS);
   const { items: relationships } = useCollection<Relationship>(COLLECTIONS.RELATIONSHIPS);
-  const { items: ideas }         = useCollection<Idea>(COLLECTIONS.IDEAS);
   const attention = useAttentionItems();
 
   const now = Date.now();

@@ -112,7 +112,7 @@ function ItemRow({ title, sub, extra }: { title: string; sub: string; extra?: st
 
 function QuickAddRow({ placeholder, onAdd }: {
   placeholder: string;
-  onAdd: (title: string) => Promise<void>;
+  onAdd: (title: string) => Promise<unknown>;
 }) {
   const [value, setValue] = useState('');
   const [saving, setSaving] = useState(false);
