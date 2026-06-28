@@ -238,6 +238,13 @@ export function CommandCenter() {
     if (route) navigate(route);
   }
 
+  // Mobile: open via event from search icon in MobileHeader
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener('megaapp:open-command', handler as EventListener);
+    return () => window.removeEventListener('megaapp:open-command', handler as EventListener);
+  }, []);
+
   // ── Global keyboard handler ───────────────────────────────────────────────
 
   useEffect(() => {

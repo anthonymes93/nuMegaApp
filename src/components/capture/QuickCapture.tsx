@@ -9,7 +9,7 @@ import styles from './QuickCapture.module.css';
 
 const MAX_CAPTURE_LENGTH = 500;
 
-export function QuickCapture() {
+export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean }) {
   const [open, setOpen] = useState(false);
   const [rawInput, setRawInput] = useState('');
   const [body, setBody] = useState('');
@@ -73,11 +73,13 @@ export function QuickCapture() {
 
   return (
     <>
-      <button className={styles.trigger} onClick={() => setOpen(true)}>
-        <span className={styles.triggerPlus}>+</span>
-        <span className={styles.triggerText}>Capture…</span>
-        <span className={styles.triggerKbd}>⌘K</span>
-      </button>
+      {!hideTrigger && (
+        <button className={styles.trigger} onClick={() => setOpen(true)}>
+          <span className={styles.triggerPlus}>+</span>
+          <span className={styles.triggerText}>Capture…</span>
+          <span className={styles.triggerKbd}>⌘K</span>
+        </button>
+      )}
 
       <Modal open={open} onClose={handleClose} title="Capture">
         <div className={styles.form}>

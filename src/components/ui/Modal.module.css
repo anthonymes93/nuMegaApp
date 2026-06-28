@@ -57,3 +57,26 @@
   padding: 16px 18px;
   flex: 1;
 }
+
+@media (max-width: 768px) {
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    width: 100% !important;
+    max-height: 92vh;
+    max-height: 92dvh;
+    border-radius: 14px 14px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .close {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+}

@@ -150,3 +150,35 @@
   border: 1px solid var(--border-strong); border-radius: 3px;
   padding: 0 4px; line-height: 1.6; font-family: inherit;
 }
+
+@media (max-width: 768px) {
+  .overlay {
+    padding-top: 0;
+    align-items: flex-start;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+    max-height: 100vh;
+    max-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
+    border: none;
+  }
+
+  .searchInput {
+    font-size: 16px; /* prevent iOS zoom */
+    padding: 16px 0;
+  }
+
+  .item {
+    min-height: 48px;
+    padding: 10px 16px;
+  }
+
+  .footer {
+    padding-bottom: env(safe-area-inset-bottom, 8px);
+  }
+}

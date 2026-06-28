@@ -201,6 +201,11 @@
 }
 .queueBtnDanger:hover { color: var(--danger); border-color: rgba(204,51,51,0.3); }
 
+.queueBtnKey {
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
 .queueHint {
   font-size: 11px;
   color: var(--text-dim);
@@ -311,4 +316,50 @@
   border-radius: var(--radius);
   padding: 7px 10px;
   line-height: 1.4;
+}
+
+/* ── Mobile ──────────────────────────────── */
+@media (max-width: 768px) {
+  .page { max-width: 100%; }
+
+  /* Bigger row touch targets */
+  .queueRowTop { min-height: 52px; padding: 12px 14px; }
+
+  /* Hide keyboard hint — touch users don't need it */
+  .queueHint { display: none; }
+
+  /* Large tap-target action buttons */
+  .queueActions { gap: 8px; flex-wrap: wrap; }
+  .queueBtn {
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 13px;
+    flex: 1;
+    min-width: calc(50% - 4px);
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Hide keyboard shortcut hint labels on mobile */
+  .queueBtnKey { display: none; }
+
+  /* Type select → full width */
+  .typeSelect {
+    width: 100%;
+    font-size: 14px;
+    min-height: 40px;
+    padding: 6px 10px;
+  }
+
+  /* Card action buttons */
+  .actionBtn {
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  /* Wider expanded area */
+  .queueExpanded { padding: 0 14px 14px 14px; }
 }

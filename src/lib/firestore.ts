@@ -25,10 +25,16 @@ export const COLLECTIONS = {
   RELATIONSHIPS: 'megaRelationships',
 } as const;
 
+function removeUndefined<T extends object>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined)
+  ) as T;
+}
+
 export async function addDocument(collectionName: string, data: DocumentData) {
   const ref = collection(db, collectionName);
   return addDoc(ref, {
-    ...data,
+    ...removeUndefined(data),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -37,7 +43,7 @@ export async function addDocument(collectionName: string, data: DocumentData) {
 export async function updateDocument(collectionName: string, id: string, data: Partial<DocumentData>) {
   const ref = doc(db, collectionName, id);
   return updateDoc(ref, {
-    ...data,
+    ...removeUndefined(data),
     updatedAt: serverTimestamp(),
   });
 }

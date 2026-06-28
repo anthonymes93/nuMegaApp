@@ -31,3 +31,20 @@
   overflow-y: auto;
   padding: 24px 28px;
 }
+
+/* ── Mobile shell ────────────────────────── */
+.shellMobile {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.mainMobile {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 16px 24px;
+}

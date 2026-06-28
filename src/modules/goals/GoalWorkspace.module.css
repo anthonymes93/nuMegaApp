@@ -208,3 +208,34 @@
   display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 32px 0;
 }
 .notFound p { font-size: 13px; color: var(--text-muted); }
+
+/* ── Mobile ──────────────────────────────── */
+@media (max-width: 768px) {
+  .page { max-width: 100%; }
+
+  /* Header stacks cleanly */
+  .header { flex-direction: column; gap: 10px; padding-bottom: 12px; }
+  .headerMeta { flex-wrap: wrap; gap: 4px; }
+
+  /* Focus bar rows stack */
+  .focusRow { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .focusLabel { width: auto; }
+  .inlineView { width: 100%; }
+  .inlineInput { width: 100%; }
+
+  /* Item rows bigger touch targets */
+  .itemRow { min-height: 44px; padding: 10px 14px; flex-wrap: wrap; }
+  .itemExtra { max-width: 100%; white-space: normal; word-break: break-word; }
+
+  /* Task toggle bigger */
+  .taskToggle { width: 24px; font-size: 16px; }
+
+  /* Quick-add row */
+  .quickAdd { flex-wrap: wrap; }
+  .quickInput { min-width: 0; }
+
+  /* Activity row wraps */
+  .activityRow { flex-wrap: wrap; gap: 4px 8px; padding: 8px 14px; }
+  .activityTitle { min-width: 100%; order: -1; }
+  .activityDate { width: auto; text-align: left; }
+}

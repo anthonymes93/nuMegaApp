@@ -317,25 +317,25 @@ function ProcessingQueue({
                       className={styles.queueBtn}
                       onClick={(e) => { e.stopPropagation(); onApprove(item); }}
                     >
-                      [A] Approve
+                      <span className={styles.queueBtnKey}>[A]</span> Approve
                     </button>
                     <button
                       className={`${styles.queueBtn} ${styles.queueBtnAccent}`}
                       onClick={(e) => { e.stopPropagation(); onConvert(item); }}
                     >
-                      [C] Convert →
+                      <span className={styles.queueBtnKey}>[C]</span> Convert →
                     </button>
                     <button
                       className={styles.queueBtn}
                       onClick={(e) => { e.stopPropagation(); onArchive(item); }}
                     >
-                      [X] Archive
+                      <span className={styles.queueBtnKey}>[X]</span> Archive
                     </button>
                     <button
                       className={`${styles.queueBtn} ${styles.queueBtnDanger}`}
                       onClick={(e) => { e.stopPropagation(); onDelete(item); }}
                     >
-                      [D] Delete
+                      <span className={styles.queueBtnKey}>[D]</span> Delete
                     </button>
                   </div>
                 </div>

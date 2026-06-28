@@ -96,3 +96,30 @@
   border-color: var(--border);
 }
 .ghost:hover:not(:disabled) { color: var(--text); border-color: var(--text-dim); }
+
+@media (max-width: 768px) {
+  /* Stack side-by-side rows vertically */
+  .row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* Larger tap targets for buttons */
+  .btn {
+    min-height: 44px;
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  /* Full-width form inputs */
+  .input, .textarea, .select {
+    font-size: 16px; /* prevent iOS auto-zoom */
+    padding: 10px 12px;
+  }
+
+  /* Sticky actions at bottom of modal body */
+  .actions {
+    padding-top: 16px;
+    gap: 8px;
+  }
+}
