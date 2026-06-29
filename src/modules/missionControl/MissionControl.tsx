@@ -1,14 +1,17 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useCollection } from '../../hooks/useCollection';
 import { useAttentionItems } from '../../hooks/useAttentionItems';
 import { COLLECTIONS } from '../../lib/firestore';
 import type { InboxItem, Task, Venture, Goal, Decision, Relationship } from '../../types';
+import { QuickViewModal, type QuickViewItem } from './QuickViewModal';
 import styles from './MissionControl.module.css';
 
 export function MissionControl() {
   const navigate = useNavigate();
+  const [quickView, setQuickView] = useState<QuickViewItem | null>(null);
+
   const { items: inbox }         = useCollection<InboxItem>(COLLECTIONS.INBOX);
   const { items: tasks }         = useCollection<Task>(COLLECTIONS.TASKS);
   const { items: ventures }      = useCollection<Venture>(COLLECTIONS.VENTURES);
@@ -121,7 +124,7 @@ export function MissionControl() {
           hint="Items captured, not yet processed"
         >
           {inboxQueue.length === 0 ? <Empty /> : inboxQueue.slice(0, 8).map((i) => (
-            <Row key={i.id} onClick={() => navigate('/inbox')} title={i.title}>
+            <Row key={i.id} onClick={() => setQuickView({ kind: 'inbox', item: i })} title={i.title}>
               <span className={styles.rowTitle}>{i.title}</span>
               {i.possibleType && i.possibleType !== 'unclassified' && (
                 <TypeTag type={i.possibleType} />
@@ -136,7 +139,7 @@ export function MissionControl() {
           nav="/tasks"
         >
           {activeTasks.length === 0 ? <Empty /> : activeTasks.slice(0, 8).map((t) => (
-            <Row key={t.id} onClick={() => navigate('/tasks')} title={t.title}>
+            <Row key={t.id} onClick={() => setQuickView({ kind: 'task', item: t })} title={t.title}>
               <span className={styles.rowTitle}>{t.title}</span>
               <span className={`${styles.priorityTag} ${styles[`p_${t.priority}`]}`}>{t.priority}</span>
               <span className={`${styles.statusTag}`}>{t.status}</span>
@@ -151,7 +154,7 @@ export function MissionControl() {
           hint="Active goals with a linked active venture"
         >
           {goalsInMotion.length === 0 ? <Empty /> : goalsInMotion.slice(0, 6).map((g) => (
-            <Row key={g.id} onClick={() => navigate(`/goals/${g.id}`)} title={g.title}>
+            <Row key={g.id} onClick={() => setQuickView({ kind: 'goal', item: g })} title={g.title}>
               <span className={styles.rowTitle}>{g.title}</span>
               <span className={styles.horizonTag}>{g.horizon}</span>
               <span className={styles.motionTag}>in motion</span>
@@ -167,7 +170,7 @@ export function MissionControl() {
           hint="Active ventures with no next move"
         >
           {stuckVentures.length === 0 ? <Empty /> : stuckVentures.map((v) => (
-            <Row key={v.id} onClick={() => navigate(`/ventures/${v.id}`)} title={v.name}>
+            <Row key={v.id} onClick={() => setQuickView({ kind: 'venture', item: v })} title={v.name}>
               <span className={styles.rowTitle}>{v.name}</span>
               <span className={styles.stuckTag}>no next move</span>
             </Row>
@@ -182,7 +185,7 @@ export function MissionControl() {
           hint="Active goals with no next move"
         >
           {stuckGoals.length === 0 ? <Empty /> : stuckGoals.map((g) => (
-            <Row key={g.id} onClick={() => navigate(`/goals/${g.id}`)} title={g.title}>
+            <Row key={g.id} onClick={() => setQuickView({ kind: 'goal', item: g })} title={g.title}>
               <span className={styles.rowTitle}>{g.title}</span>
               <span className={styles.horizonTag}>{g.horizon}</span>
             </Row>
@@ -196,7 +199,7 @@ export function MissionControl() {
           warn={openDecisions.length > 0}
         >
           {openDecisions.length === 0 ? <Empty /> : openDecisions.slice(0, 6).map((d) => (
-            <Row key={d.id} onClick={() => navigate('/decisions')} title={[d.title, d.decision].filter(Boolean).join(' — ')}>
+            <Row key={d.id} onClick={() => setQuickView({ kind: 'decision', item: d })} title={[d.title, d.decision].filter(Boolean).join(' — ')}>
               <span className={styles.rowTitle}>{d.title}</span>
               <span className={styles.decisionText}>{d.decision}</span>
             </Row>
@@ -210,7 +213,7 @@ export function MissionControl() {
           warn={followUps.length > 0}
         >
           {followUps.length === 0 ? <Empty /> : followUps.slice(0, 6).map((r) => (
-            <Row key={r.id} onClick={() => navigate('/relationships')} title={[r.name, r.nextAction].filter(Boolean).join(' — ')}>
+            <Row key={r.id} onClick={() => setQuickView({ kind: 'relationship', item: r })} title={[r.name, r.nextAction].filter(Boolean).join(' — ')}>
               <span className={styles.rowTitle}>{r.name}</span>
               <span className={styles.followUpText}>{r.nextAction}</span>
             </Row>
@@ -249,7 +252,7 @@ export function MissionControl() {
                   className={styles.stuckTr}
                   style={{ cursor: 'pointer' }}
                   title={[item.title, item.reason].filter(Boolean).join(' — ')}
-                  onClick={() => navigate(item.targetRoute)}
+                  onClick={() => setQuickView({ kind: 'attention', item })}
                 >
                   <td className={styles.stuckTd}>
                     <span className={`${styles.attentionSev} ${styles[`sev_${item.severity}`]}`}>
@@ -268,6 +271,7 @@ export function MissionControl() {
         )}
       </div>
 
+      <QuickViewModal qv={quickView} onClose={() => setQuickView(null)} />
     </div>
   );
 }
