@@ -12,12 +12,18 @@ const MAX_CAPTURE_LENGTH = 500;
 const MAX_IMAGES = 20;
 const ACCEPTED_IMAGE_TYPES = 'image/png,image/jpeg,image/webp,image/gif';
 
+interface ImageEntry {
+  id: string;
+  file: File;
+  previewUrl: string;
+}
+
 export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean }) {
   const [open, setOpen] = useState(false);
   const [rawInput, setRawInput] = useState('');
   const [body, setBody] = useState('');
   const [showDetails, setShowDetails] = useState(false);
-  const [images, setImages] = useState<File[]>([]);
+  const [images, setImages] = useState<ImageEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -31,7 +37,7 @@ export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean })
   );
 
   const totalSize = useMemo(
-    () => images.reduce((sum, f) => sum + f.size, 0),
+    () => images.reduce((sum, e) => sum + e.file.size, 0),
     [images]
   );
 
@@ -45,33 +51,47 @@ export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean })
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
   }, []);
 
-  const prevPreviewUrls = useRef<string[]>([]);;
+  function revokeAll(entries: ImageEntry[]) {
+    entries.forEach((e) => URL.revokeObjectURL(e.previewUrl));
+  }
 
   function handleClose() {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    setImages((prev) => { revokeAll(prev); return []; });
     setOpen(false);
     setSaved(false);
     setRawInput('');
     setBody('');
     setShowDetails(false);
     setSaving(false);
-    setImages([]);
     setUploadError(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
-    setImages((prev) => {
-      const combined = [...prev, ...files];
-      return combined.slice(0, MAX_IMAGES);
-    });
-    // Reset so the same file can be re-selected after removal
+    // Reset input so the same file can be re-selected after removal
     if (fileInputRef.current) fileInputRef.current.value = '';
+    if (files.length === 0) return;
+
+    setImages((prev) => {
+      const slots = MAX_IMAGES - prev.length;
+      if (slots <= 0) return prev;
+      const newEntries = files.slice(0, slots).map((file) => ({
+        id: crypto.randomUUID(),
+        file,
+        previewUrl: URL.createObjectURL(file),
+      }));
+      return [...prev, ...newEntries];
+    });
   }
 
-  function removeImage(index: number) {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+  function removeImage(id: string) {
+    setImages((prev) => {
+      const entry = prev.find((e) => e.id === id);
+      if (entry) URL.revokeObjectURL(entry.previewUrl);
+      return prev.filter((e) => e.id !== id);
+    });
   }
 
   async function handleSave() {
@@ -96,7 +116,7 @@ export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean })
 
       if (images.length > 0) {
         try {
-          const attachments = await uploadImages(docRef.id, images);
+          const attachments = await uploadImages(docRef.id, images.map((e) => e.file));
           await update(docRef.id, { imageAttachments: attachments } as Partial<InboxItem>);
         } catch {
           hadUploadError = true;
@@ -114,14 +134,6 @@ export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean })
       setSaving(false);
     }
   }
-
-  // Revoke previous batch and create fresh object URLs whenever images changes
-  const previews = useMemo(() => {
-    prevPreviewUrls.current.forEach((u) => URL.revokeObjectURL(u));
-    const result = images.map((f) => ({ name: f.name, url: URL.createObjectURL(f) }));
-    prevPreviewUrls.current = result.map((r) => r.url);
-    return result;
-  }, [images]);
 
   return (
     <>
@@ -183,15 +195,15 @@ export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean })
 
           {/* Image attachments */}
           <div className={styles.attachArea}>
-            {previews.length > 0 && (
+            {images.length > 0 && (
               <div className={styles.thumbRow}>
-                {previews.map((p, i) => (
-                  <div key={i} className={styles.thumb}>
-                    <img src={p.url} alt={p.name} />
+                {images.map((entry) => (
+                  <div key={entry.id} className={styles.thumb}>
+                    <img src={entry.previewUrl} alt={entry.file.name} />
                     <button
                       type="button"
                       className={styles.thumbRemove}
-                      onClick={() => removeImage(i)}
+                      onClick={() => removeImage(entry.id)}
                       title="Remove"
                     >×</button>
                   </div>

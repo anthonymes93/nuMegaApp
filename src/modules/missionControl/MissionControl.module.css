@@ -184,6 +184,13 @@
   border: 1px solid var(--border); white-space: nowrap; flex-shrink: 0;
 }
 
+.contextBadge {
+  font-size: 9px; font-weight: 500;
+  padding: 1px 5px; border-radius: 2px;
+  background: rgba(58, 123, 213, 0.08); color: var(--info);
+  border: 1px solid rgba(58, 123, 213, 0.18); white-space: nowrap; flex-shrink: 0;
+}
+
 /* ── Stuck Potential ─────────────────────────── */
 .stuckPanel {
   border: 1px solid var(--border); border-left: 3px solid var(--warning);

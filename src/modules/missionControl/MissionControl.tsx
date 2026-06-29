@@ -129,6 +129,9 @@ export function MissionControl() {
               {i.possibleType && i.possibleType !== 'unclassified' && (
                 <TypeTag type={i.possibleType} />
               )}
+              {hasContext(i) && (
+                <span className={styles.contextBadge}>Context</span>
+              )}
               {i.imageAttachments?.length ? (
                 <span className={styles.imgBadge}>
                   {i.imageAttachments.length} {i.imageAttachments.length === 1 ? 'image' : 'images'}
@@ -333,6 +336,14 @@ function Empty() {
 
 function TypeTag({ type }: { type: string }) {
   return <span className={`${styles.typeTag} ${styles[`tt_${type}`]}`}>{type.replace('_', ' ')}</span>;
+}
+
+function hasContext(item: InboxItem): boolean {
+  const norm = (s?: string) => s?.trim().toLowerCase();
+  const t = norm(item.title);
+  if (norm(item.body) && norm(item.body) !== t) return true;
+  if (norm(item.rawInput) && norm(item.rawInput) !== t) return true;
+  return false;
 }
 
 function StatItem({

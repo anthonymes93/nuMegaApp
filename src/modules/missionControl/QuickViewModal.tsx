@@ -125,7 +125,7 @@ function renderFields(qv: QuickViewItem, title: string): ReactNode {
       const extra = notSameAs(qv.item.body, title)
                  ?? notSameAs(qv.item.rawInput, title);
       return <>
-        {extra && <Field label="Notes" value={extra} />}
+        {extra && <Field label="Context" value={extra} />}
         {qv.item.tags?.length ? (
           <div className={styles.tags}>
             {qv.item.tags.map((t) => <span key={t} className={styles.tag}>{t}</span>)}
