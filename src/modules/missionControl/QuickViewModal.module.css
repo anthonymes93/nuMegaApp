@@ -83,6 +83,21 @@
   margin: 0;
 }
 
+/* ── Inline tags (inbox) ───────────────────── */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag {
+  font-size: 10px;
+  color: var(--text-dim);
+  background: var(--surface3);
+  border-radius: 2px;
+  padding: 1px 5px;
+}
+
 /* ── Dates ─────────────────────────────────── */
 .dates {
   display: flex;

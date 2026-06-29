@@ -53,6 +53,19 @@ function fmtTs(ts: Timestamp): string {
   return format(ts.toDate(), 'MMM d, yyyy');
 }
 
+/** Returns val only if it's non-empty and doesn't duplicate any of the `seen` values. */
+function notSameAs(
+  val: string | null | undefined,
+  ...seen: (string | null | undefined)[]
+): string | null {
+  if (!val?.trim()) return null;
+  const norm = val.trim().toLowerCase();
+  for (const s of seen) {
+    if (s?.trim().toLowerCase() === norm) return null;
+  }
+  return val.trim();
+}
+
 function Field({ label, value }: { label: string; value?: string | null }): ReactNode {
   if (!value) return null;
   return (
@@ -64,9 +77,7 @@ function Field({ label, value }: { label: string; value?: string | null }): Reac
 }
 
 function Chip({ label, cls }: { label: string; cls?: string }) {
-  return (
-    <span className={`${styles.chip} ${cls ?? ''}`}>{label}</span>
-  );
+  return <span className={`${styles.chip} ${cls ?? ''}`}>{label}</span>;
 }
 
 function renderChips(qv: QuickViewItem): ReactNode {
@@ -106,53 +117,67 @@ function renderChips(qv: QuickViewItem): ReactNode {
   }
 }
 
-function renderFields(qv: QuickViewItem): ReactNode {
+/** Renders supplementary fields, deduplicating against the already-shown title. */
+function renderFields(qv: QuickViewItem, title: string): ReactNode {
   switch (qv.kind) {
-    case 'inbox':
+    case 'inbox': {
+      // title already shows the captured text; only surface body/rawInput if genuinely different
+      const extra = notSameAs(qv.item.body, title)
+                 ?? notSameAs(qv.item.rawInput, title);
       return <>
-        <Field label="Body" value={qv.item.body || qv.item.rawInput} />
-        {qv.item.rawInput && qv.item.rawInput !== qv.item.body && (
-          <Field label="Raw input" value={qv.item.rawInput} />
-        )}
+        {extra && <Field label="Notes" value={extra} />}
         {qv.item.tags?.length ? (
-          <Field label="Tags" value={qv.item.tags.join(', ')} />
+          <div className={styles.tags}>
+            {qv.item.tags.map((t) => <span key={t} className={styles.tag}>{t}</span>)}
+          </div>
         ) : null}
       </>;
+    }
+
     case 'task':
       return <>
-        <Field label="Notes" value={qv.item.notes} />
-        {qv.item.dueAt && (
-          <Field label="Due" value={fmtTs(qv.item.dueAt)} />
-        )}
+        <Field label="Notes" value={notSameAs(qv.item.notes, title)} />
+        {qv.item.dueAt && <Field label="Due" value={fmtTs(qv.item.dueAt)} />}
       </>;
-    case 'venture':
+
+    case 'venture': {
+      const desc = notSameAs(qv.item.description, title);
       return <>
-        <Field label="Description"   value={qv.item.description} />
-        <Field label="Current focus" value={qv.item.currentFocus} />
-        <Field label="Next move"     value={qv.item.nextMove} />
+        <Field label="Description"   value={desc} />
+        <Field label="Current focus" value={notSameAs(qv.item.currentFocus, title, desc)} />
+        <Field label="Next move"     value={notSameAs(qv.item.nextMove, title, desc)} />
       </>;
-    case 'goal':
+    }
+
+    case 'goal': {
+      const desc = notSameAs(qv.item.description, title);
       return <>
-        <Field label="Description" value={qv.item.description} />
-        <Field label="Next move"   value={qv.item.nextMove} />
+        <Field label="Description" value={desc} />
+        <Field label="Next move"   value={notSameAs(qv.item.nextMove, title, desc)} />
       </>;
-    case 'decision':
+    }
+
+    case 'decision': {
+      const decision = notSameAs(qv.item.decision, title);
       return <>
-        <Field label="Decision"  value={qv.item.decision} />
-        <Field label="Reasoning" value={qv.item.reasoning} />
+        <Field label="Decision"  value={decision} />
+        <Field label="Reasoning" value={notSameAs(qv.item.reasoning, title, decision)} />
       </>;
-    case 'relationship':
+    }
+
+    case 'relationship': {
+      const notes = notSameAs(qv.item.notes, title);
       return <>
-        <Field label="Notes"       value={qv.item.notes} />
-        <Field label="Next action" value={qv.item.nextAction} />
-        {qv.item.nextActionDate && (
-          <Field label="Due" value={fmtTs(qv.item.nextActionDate)} />
-        )}
+        <Field label="Notes"       value={notes} />
+        <Field label="Next action" value={notSameAs(qv.item.nextAction, title, notes)} />
+        {qv.item.nextActionDate && <Field label="Due" value={fmtTs(qv.item.nextActionDate)} />}
       </>;
+    }
+
     case 'attention':
       return <>
-        <Field label="Reason"           value={qv.item.reason} />
-        <Field label="Suggested action" value={qv.item.actionLabel} />
+        <Field label="Reason"           value={notSameAs(qv.item.reason, title)} />
+        <Field label="Suggested action" value={notSameAs(qv.item.actionLabel, title)} />
       </>;
   }
 }
@@ -167,9 +192,9 @@ export function QuickViewModal({ qv, onClose }: Props) {
     navigate(getFullRoute(qv!));
   }
 
-  const title = getDisplayTitle(qv);
-  const chips = renderChips(qv);
-  const fields = renderFields(qv);
+  const title  = getDisplayTitle(qv);
+  const chips  = renderChips(qv);
+  const fields = renderFields(qv, title);
 
   const createdAt = qv.kind !== 'attention' ? qv.item.createdAt : null;
   const updatedAt = qv.kind !== 'attention' ? qv.item.updatedAt : null;
