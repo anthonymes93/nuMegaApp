@@ -177,6 +177,13 @@
   overflow: hidden; text-overflow: ellipsis; max-width: 200px; flex-shrink: 0;
 }
 
+.imgBadge {
+  font-size: 9px; font-weight: 500;
+  padding: 1px 5px; border-radius: 2px;
+  background: var(--surface3); color: var(--text-dim);
+  border: 1px solid var(--border); white-space: nowrap; flex-shrink: 0;
+}
+
 /* ── Stuck Potential ─────────────────────────── */
 .stuckPanel {
   border: 1px solid var(--border); border-left: 3px solid var(--warning);

@@ -129,6 +129,11 @@ export function MissionControl() {
               {i.possibleType && i.possibleType !== 'unclassified' && (
                 <TypeTag type={i.possibleType} />
               )}
+              {i.imageAttachments?.length ? (
+                <span className={styles.imgBadge}>
+                  {i.imageAttachments.length} {i.imageAttachments.length === 1 ? 'image' : 'images'}
+                </span>
+              ) : null}
             </Row>
           ))}
         </AttentionPanel>

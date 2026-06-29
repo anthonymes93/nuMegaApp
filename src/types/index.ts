@@ -38,6 +38,15 @@ export type InboxType =
 
 export type Urgency = 'low' | 'medium' | 'high';
 
+export interface ImageAttachment {
+  id: string;
+  url: string;
+  name: string;
+  size: number;
+  type: string;
+  uploadedAt: Timestamp;
+}
+
 export interface InboxItem {
   id: string;
   title: string;
@@ -55,6 +64,7 @@ export interface InboxItem {
   source?: string;
   processedAt?: Timestamp;
   convertedTo?: { type: string; id: string };
+  imageAttachments?: ImageAttachment[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

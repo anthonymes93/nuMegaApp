@@ -143,6 +143,41 @@
 }
 .actionClose:hover { background: var(--surface3); }
 
+/* ── Images section ────────────────────────── */
+.imagesSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.imageGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 6px;
+}
+
+.imageThumb {
+  display: block;
+  border-radius: var(--radius);
+  overflow: hidden;
+  aspect-ratio: 1;
+  border: 1px solid var(--border-strong);
+  transition: opacity 0.1s;
+  flex-shrink: 0;
+}
+
+.imageThumb:hover {
+  opacity: 0.82;
+}
+
+.imageThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 /* ── Mobile ────────────────────────────────── */
 @media (max-width: 768px) {
   .itemTitle { font-size: 16px; }

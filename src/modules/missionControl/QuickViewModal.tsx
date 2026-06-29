@@ -131,6 +131,27 @@ function renderFields(qv: QuickViewItem, title: string): ReactNode {
             {qv.item.tags.map((t) => <span key={t} className={styles.tag}>{t}</span>)}
           </div>
         ) : null}
+        {qv.item.imageAttachments?.length ? (
+          <div className={styles.imagesSection}>
+            <span className={styles.fieldLabel}>
+              Images ({qv.item.imageAttachments.length})
+            </span>
+            <div className={styles.imageGrid}>
+              {qv.item.imageAttachments.map((img) => (
+                <a
+                  key={img.id}
+                  href={img.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.imageThumb}
+                  title={img.name}
+                >
+                  <img src={img.url} alt={img.name} loading="lazy" />
+                </a>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </>;
     }
 
