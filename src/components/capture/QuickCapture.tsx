@@ -56,6 +56,7 @@ export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean })
   }
 
   function handleClose() {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     setImages((prev) => { revokeAll(prev); return []; });
     setOpen(false);
