@@ -92,3 +92,181 @@
 .statusActive { background: var(--surface2); color: var(--text); border-color: var(--border-strong); }
 
 .form { display: flex; flex-direction: column; gap: 12px; }
+
+/* ── Task section inside expanded card ──── */
+.taskSection {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.taskList {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.taskCard {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.taskCard:last-child { border-bottom: none; }
+.taskCardDone { background: var(--bg); }
+.taskCardDone .taskTitleBtn { color: var(--text-dim); text-decoration: line-through; }
+
+.taskTop { display: flex; align-items: flex-start; gap: 7px; }
+
+.taskToggle {
+  background: none; border: none; padding: 0;
+  width: 15px; flex-shrink: 0; line-height: 1.4;
+  font-size: 12px; color: var(--text-dim); cursor: pointer;
+  transition: color 0.1s;
+}
+.taskToggle:hover { color: var(--accent); }
+.taskCardDone .taskToggle { color: var(--success); }
+
+.taskTitleBtn {
+  flex: 1; background: none; border: none; padding: 0;
+  text-align: left; font-size: 12.5px; font-family: inherit;
+  color: var(--text); line-height: 1.4; cursor: pointer;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  transition: color 0.1s;
+}
+.taskTitleBtn:hover { color: var(--accent); }
+
+.taskNotes {
+  margin: 0 0 0 22px;
+  font-size: 11px; color: var(--text-dim); line-height: 1.4;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.taskBottom {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 6px;
+  padding-left: 22px;
+}
+
+.taskChips { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.taskChip {
+  font-size: 9px; font-weight: 600; letter-spacing: 0.3px;
+  padding: 1px 5px; border-radius: 2px; flex-shrink: 0;
+  text-transform: capitalize;
+  background: var(--surface3); color: var(--text-dim);
+}
+.priority_high   { color: var(--danger);  background: rgba(204,51,51,0.08); }
+.priority_medium { color: var(--text-muted); background: var(--surface3); }
+.priority_low    { color: var(--text-dim);   background: var(--surface3); }
+.status_todo  { color: var(--text-dim);  background: var(--surface3); }
+.status_doing { color: var(--accent);    background: var(--accent-dim); }
+.status_done  { color: var(--success);   background: rgba(16,160,112,0.1); }
+
+.taskActions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+.taskActionBtn {
+  font-size: 10px; font-family: inherit;
+  color: var(--text-dim); background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 2px 7px; cursor: pointer; transition: all 0.1s; white-space: nowrap;
+}
+.taskActionBtn:hover { color: var(--text); border-color: var(--border-strong); }
+
+.taskDelBtn {
+  font-size: 10px; font-family: inherit;
+  color: var(--text-dim); background: none; border: none;
+  padding: 2px 5px; border-radius: var(--radius);
+  cursor: pointer; line-height: 1; transition: color 0.1s;
+}
+.taskDelBtn:hover { color: var(--danger); }
+
+.taskDelConfirm {
+  font-size: 10px; font-family: inherit;
+  color: var(--danger); background: rgba(204,51,51,0.08);
+  border: 1px solid rgba(204,51,51,0.22); border-radius: var(--radius);
+  padding: 2px 7px; cursor: pointer; white-space: nowrap; transition: background 0.1s;
+}
+.taskDelConfirm:hover { background: rgba(204,51,51,0.15); }
+
+.taskDelCancel {
+  font-size: 10px; font-family: inherit;
+  color: var(--text-dim); background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 2px 7px; cursor: pointer; white-space: nowrap; transition: all 0.1s;
+}
+.taskDelCancel:hover { color: var(--text); }
+
+/* ── Task detail modal ───────────────────── */
+.detailBody { display: flex; flex-direction: column; gap: 12px; }
+
+.detailChips { display: flex; gap: 5px; flex-wrap: wrap; }
+
+.detailChip {
+  font-size: 9.5px; font-weight: 600; letter-spacing: 0.4px;
+  text-transform: uppercase; padding: 2px 6px; border-radius: 3px;
+  background: var(--surface3); color: var(--text-muted);
+}
+
+.detailTitle {
+  font-size: 15px; font-weight: 600; color: var(--text);
+  line-height: 1.4; margin: 0;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  word-break: break-word;
+}
+
+.detailField { display: flex; flex-direction: column; gap: 3px; }
+
+.detailLabel {
+  font-size: 9.5px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text-dim);
+}
+
+.detailValue {
+  font-size: 13px; color: var(--text-muted); line-height: 1.55;
+  white-space: pre-wrap; word-break: break-word; margin: 0;
+}
+
+.detailDates {
+  display: flex; gap: 14px;
+  font-size: 11px; color: var(--text-dim);
+  padding-top: 10px; border-top: 1px solid var(--border);
+}
+
+.detailActions {
+  display: flex; align-items: center; gap: 8px;
+  padding-top: 14px; border-top: 1px solid var(--border);
+}
+
+.detailDoneBtn {
+  font-size: 12.5px; font-weight: 500; font-family: inherit;
+  color: var(--accent); padding: 5px 12px;
+  border: 1px solid var(--accent); border-radius: var(--radius);
+  background: var(--accent-dim); cursor: pointer; transition: opacity 0.1s;
+}
+.detailDoneBtn:hover { opacity: 0.8; }
+
+.detailCloseBtn {
+  font-size: 12.5px; font-family: inherit;
+  color: var(--text-muted); padding: 5px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface2); cursor: pointer; transition: background 0.1s;
+}
+.detailCloseBtn:hover { background: var(--surface3); }
+
+@media (max-width: 768px) {
+  .taskCard { padding: 10px 12px; }
+  .taskTitleBtn { font-size: 13.5px; -webkit-line-clamp: 3; }
+  .taskNotes { white-space: normal; word-break: break-word; }
+  .taskBottom { padding-left: 22px; flex-wrap: wrap; gap: 8px; }
+  .taskActions { width: 100%; justify-content: flex-end; }
+  .taskActionBtn, .taskDelConfirm, .taskDelCancel { padding: 5px 10px; font-size: 12px; }
+  .detailActions { flex-direction: column; align-items: stretch; }
+  .detailDoneBtn, .detailCloseBtn { text-align: center; padding: 10px 12px; font-size: 14px; }
+}

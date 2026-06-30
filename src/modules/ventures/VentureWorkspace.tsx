@@ -103,17 +103,135 @@ function WorkspaceSection({
   );
 }
 
-function TaskRow({ task, onToggleDone }: { task: Task; onToggleDone: () => void }) {
+function TaskRow({
+  task,
+  onToggleDone,
+  onDelete,
+  onView,
+}: {
+  task: Task;
+  onToggleDone: () => void;
+  onDelete: () => void;
+  onView: () => void;
+}) {
+  const [confirmDel, setConfirmDel] = useState(false);
   const isDone = task.status === 'done';
+
   return (
-    <div className={`${styles.itemRow} ${isDone ? styles.itemDone : ''}`}>
-      <button className={styles.taskToggle} onClick={onToggleDone} title={isDone ? 'Mark todo' : 'Mark done'}>
-        {isDone ? '●' : '○'}
-      </button>
-      <span className={styles.itemTitle}>{task.title}</span>
-      <span className={`${styles.itemSub} ${styles[`status_${task.status}`]}`}>{task.status}</span>
-      <span className={`${styles.itemSub} ${styles[`priority_${task.priority}`]}`}>{task.priority}</span>
+    <div className={`${styles.taskCard} ${isDone ? styles.taskCardDone : ''}`}>
+      <div className={styles.taskTop}>
+        <button
+          className={styles.taskToggle}
+          onClick={onToggleDone}
+          title={isDone ? 'Undo done' : 'Mark done'}
+        >
+          {isDone ? '✓' : '○'}
+        </button>
+        <button className={styles.taskTitleBtn} onClick={onView}>
+          {task.title}
+        </button>
+      </div>
+
+      {task.notes && (
+        <p className={styles.taskNotes}>{task.notes}</p>
+      )}
+
+      <div className={styles.taskBottom}>
+        <div className={styles.taskChips}>
+          <span className={`${styles.taskChip} ${styles[`priority_${task.priority}`]}`}>
+            {task.priority}
+          </span>
+          <span className={`${styles.taskChip} ${styles[`status_${task.status}`]}`}>
+            {task.status}
+          </span>
+        </div>
+        <div className={styles.taskActions}>
+          {confirmDel ? (
+            <>
+              <button
+                className={styles.taskDelConfirm}
+                onClick={() => { onDelete(); setConfirmDel(false); }}
+              >
+                Confirm delete
+              </button>
+              <button className={styles.taskDelCancel} onClick={() => setConfirmDel(false)}>
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              <button className={styles.taskActionBtn} onClick={onToggleDone}>
+                {isDone ? 'Undo' : 'Done'}
+              </button>
+              <button
+                className={styles.taskDelBtn}
+                onClick={() => setConfirmDel(true)}
+                title="Delete task"
+              >
+                ✕
+              </button>
+            </>
+          )}
+        </div>
+      </div>
     </div>
+  );
+}
+
+function TaskDetailModal({
+  task,
+  ventureName,
+  onClose,
+  onToggleDone,
+}: {
+  task: Task;
+  ventureName: string;
+  onClose: () => void;
+  onToggleDone: () => void;
+}) {
+  const isDone = task.status === 'done';
+
+  return (
+    <Modal open onClose={onClose} title="Task" width={480}>
+      <div className={styles.detailBody}>
+        <div className={styles.detailChips}>
+          <span className={`${styles.detailChip} ${styles[`priority_${task.priority}`]}`}>
+            {task.priority}
+          </span>
+          <span className={`${styles.detailChip} ${styles[`status_${task.status}`]}`}>
+            {task.status}
+          </span>
+        </div>
+
+        <h3 className={styles.detailTitle}>{task.title}</h3>
+
+        {task.notes && (
+          <div className={styles.detailField}>
+            <span className={styles.detailLabel}>Notes</span>
+            <p className={styles.detailValue}>{task.notes}</p>
+          </div>
+        )}
+
+        <div className={styles.detailField}>
+          <span className={styles.detailLabel}>Venture</span>
+          <p className={styles.detailValue}>{ventureName}</p>
+        </div>
+
+        <div className={styles.detailDates}>
+          {task.createdAt && <span>Created {safeDateLong(task.createdAt)}</span>}
+          {task.updatedAt && <span>Updated {safeDateLong(task.updatedAt)}</span>}
+        </div>
+
+        <div className={styles.detailActions}>
+          <button className={styles.detailDoneBtn} onClick={onToggleDone}>
+            {isDone ? 'Undo Done' : 'Mark Done'}
+          </button>
+          <button className={styles.detailCloseBtn} onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -190,7 +308,7 @@ function ActivityRow({ type, title, sub, ts }: {
   );
 }
 
-// ── Edit modal (duplicated from Ventures.tsx for self-containment) ──────────
+// ── Edit modal ──────────────────────────────────────────────────────────────
 
 function VentureEditModal({
   venture,
@@ -268,7 +386,7 @@ export function VentureWorkspace() {
   const navigate = useNavigate();
 
   const { items: allVentures, update: updateVenture } = useCollection<Venture>(COLLECTIONS.VENTURES);
-  const { items: allTasks, add: addTask, update: updateTask } = useCollection<Task>(COLLECTIONS.TASKS);
+  const { items: allTasks, add: addTask, update: updateTask, remove: removeTask } = useCollection<Task>(COLLECTIONS.TASKS);
   const { items: allIdeas, add: addIdea } = useCollection<Idea>(COLLECTIONS.IDEAS);
   const { items: allGoals, add: addGoal } = useCollection<Goal>(COLLECTIONS.GOALS);
   const { items: allResources, add: addResource } = useCollection<Resource>(COLLECTIONS.RESOURCES);
@@ -277,6 +395,14 @@ export function VentureWorkspace() {
   const { items: allRelationships, add: addRelationship } = useCollection<Relationship>(COLLECTIONS.RELATIONSHIPS);
 
   const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  // Close task detail modal if the task was deleted while open
+  useEffect(() => {
+    if (selectedTaskId && !allTasks.find((t) => t.id === selectedTaskId)) {
+      setSelectedTaskId(null);
+    }
+  }, [allTasks, selectedTaskId]);
 
   if (!ventureId) return null;
 
@@ -319,10 +445,11 @@ export function VentureWorkspace() {
   const totalLinked = activeTasks.length + activeIdeas.length + activeGoals.length +
     activeResources.length + activeDecisions.length + activeExperiments.length + relations.length;
 
-  // Goal this venture is anchored to
   const linkedGoal = allGoals.find((g) => g.id === venture.relatedGoalId);
 
-  // Activity: merge all linked objects, sort by createdAt desc, take top 12
+  // Derive live task from the subscription so the modal stays current after updates
+  const selectedTask = selectedTaskId ? allTasks.find((t) => t.id === selectedTaskId) ?? null : null;
+
   type ActivityEntry = { id: string; type: string; title: string; sub: string; ts: unknown };
   const activity: ActivityEntry[] = [
     ...tasks.map((t) => ({ id: t.id, type: 'task', title: t.title, sub: t.status, ts: t.createdAt })),
@@ -410,6 +537,8 @@ export function VentureWorkspace() {
               key={t.id}
               task={t}
               onToggleDone={() => updateTask(t.id, { status: t.status === 'done' ? 'todo' : 'done' })}
+              onDelete={() => removeTask(t.id)}
+              onView={() => setSelectedTaskId(t.id)}
             />
           ))}
           <QuickAddRow
@@ -570,6 +699,19 @@ export function VentureWorkspace() {
             await updateVenture(venture.id, data);
             setShowEditModal(false);
           }}
+        />
+      )}
+
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          ventureName={venture.name}
+          onClose={() => setSelectedTaskId(null)}
+          onToggleDone={() =>
+            updateTask(selectedTask.id, {
+              status: selectedTask.status === 'done' ? 'todo' : 'done',
+            })
+          }
         />
       )}
     </div>

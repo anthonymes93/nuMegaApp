@@ -163,16 +163,111 @@
   max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* ── Task toggle ─────────────────────────── */
+/* ── Task cards ──────────────────────────── */
+.taskCard {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.taskCard:last-child { border-bottom: none; }
+
+.taskCardDone { background: var(--surface); }
+.taskCardDone .taskTitleBtn {
+  color: var(--text-dim);
+  text-decoration: line-through;
+}
+
+.taskTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 .taskToggle {
-  background: none; border: none; padding: 0; width: 16px; flex-shrink: 0;
+  background: none; border: none; padding: 0;
+  width: 16px; flex-shrink: 0; line-height: 1.4;
   font-size: 13px; color: var(--text-dim); cursor: pointer;
-  transition: color 0.1s; line-height: 1;
+  transition: color 0.1s;
 }
 .taskToggle:hover { color: var(--accent); }
-.itemDone .taskToggle { color: var(--success); }
+.taskCardDone .taskToggle { color: var(--success); }
 
-/* ── Priority chips ──────────────────────── */
+.taskTitleBtn {
+  flex: 1;
+  background: none; border: none; padding: 0;
+  text-align: left;
+  font-size: 12.5px; font-family: inherit;
+  color: var(--text); line-height: 1.4;
+  cursor: pointer;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  transition: color 0.1s;
+}
+.taskTitleBtn:hover { color: var(--accent); }
+
+.taskNotes {
+  margin: 0 0 0 24px;
+  font-size: 11.5px; color: var(--text-dim); line-height: 1.4;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.taskBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-left: 24px;
+}
+
+.taskChips { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.taskChip {
+  font-size: 9.5px; font-weight: 600; letter-spacing: 0.3px;
+  padding: 1px 5px; border-radius: 2px; flex-shrink: 0;
+  text-transform: capitalize;
+  background: var(--surface3); color: var(--text-dim);
+}
+
+.taskActions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+.taskActionBtn {
+  font-size: 10.5px; font-family: inherit;
+  color: var(--text-dim); background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 2px 8px; cursor: pointer; transition: all 0.1s; white-space: nowrap;
+}
+.taskActionBtn:hover { color: var(--text); border-color: var(--border-strong); }
+
+.taskDelBtn {
+  font-size: 11px; font-family: inherit;
+  color: var(--text-dim); background: none; border: none;
+  padding: 2px 5px; border-radius: var(--radius);
+  cursor: pointer; line-height: 1; transition: color 0.1s;
+}
+.taskDelBtn:hover { color: var(--danger); }
+
+.taskDelConfirm {
+  font-size: 10.5px; font-family: inherit;
+  color: var(--danger); background: rgba(204,51,51,0.08);
+  border: 1px solid rgba(204,51,51,0.22); border-radius: var(--radius);
+  padding: 2px 8px; cursor: pointer; white-space: nowrap; transition: background 0.1s;
+}
+.taskDelConfirm:hover { background: rgba(204,51,51,0.15); }
+
+.taskDelCancel {
+  font-size: 10.5px; font-family: inherit;
+  color: var(--text-dim); background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 2px 8px; cursor: pointer; white-space: nowrap; transition: all 0.1s;
+}
+.taskDelCancel:hover { color: var(--text); }
+
+/* ── Priority / status colours (shared by chips + detail) ── */
 .priority_high   { color: var(--danger); background: rgba(204,51,51,0.08); }
 .priority_medium { color: var(--text-muted); background: var(--surface3); }
 .priority_low    { color: var(--text-dim); background: var(--surface3); }
@@ -180,6 +275,67 @@
 .status_todo     { color: var(--text-dim); background: var(--surface3); }
 .status_doing    { color: var(--accent); background: var(--accent-dim); }
 .status_done     { color: var(--success); background: rgba(16,160,112,0.1); }
+
+/* ── Task detail modal ───────────────────── */
+.detailBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detailChips { display: flex; gap: 5px; flex-wrap: wrap; }
+
+.detailChip {
+  font-size: 9.5px; font-weight: 600; letter-spacing: 0.4px;
+  text-transform: uppercase; padding: 2px 6px; border-radius: 3px;
+  background: var(--surface3); color: var(--text-muted);
+}
+
+.detailTitle {
+  font-size: 15px; font-weight: 600; color: var(--text);
+  line-height: 1.4; margin: 0;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  word-break: break-word;
+}
+
+.detailField { display: flex; flex-direction: column; gap: 3px; }
+
+.detailLabel {
+  font-size: 9.5px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text-dim);
+}
+
+.detailValue {
+  font-size: 13px; color: var(--text-muted); line-height: 1.55;
+  white-space: pre-wrap; word-break: break-word; margin: 0;
+}
+
+.detailDates {
+  display: flex; gap: 14px;
+  font-size: 11px; color: var(--text-dim);
+  padding-top: 10px; border-top: 1px solid var(--border);
+}
+
+.detailActions {
+  display: flex; align-items: center; gap: 8px;
+  padding-top: 14px; border-top: 1px solid var(--border);
+}
+
+.detailDoneBtn {
+  font-size: 12.5px; font-weight: 500; font-family: inherit;
+  color: var(--accent); padding: 5px 12px;
+  border: 1px solid var(--accent); border-radius: var(--radius);
+  background: var(--accent-dim); cursor: pointer; transition: opacity 0.1s;
+}
+.detailDoneBtn:hover { opacity: 0.8; }
+
+.detailCloseBtn {
+  font-size: 12.5px; font-family: inherit;
+  color: var(--text-muted); padding: 5px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface2); cursor: pointer; transition: background 0.1s;
+}
+.detailCloseBtn:hover { background: var(--surface3); }
 
 /* ── Quick-add row ───────────────────────── */
 .quickAdd {
@@ -260,8 +416,18 @@
   .itemRow { min-height: 44px; padding: 10px 14px; flex-wrap: wrap; }
   .itemExtra { max-width: 100%; white-space: normal; word-break: break-word; }
 
-  /* Task toggle bigger */
-  .taskToggle { width: 24px; font-size: 16px; }
+  /* Task cards */
+  .taskCard { padding: 12px 14px; gap: 7px; }
+  .taskToggle { width: 22px; font-size: 16px; line-height: 1.3; }
+  .taskTitleBtn { font-size: 14px; -webkit-line-clamp: 3; }
+  .taskNotes { white-space: normal; word-break: break-word; }
+  .taskBottom { padding-left: 30px; flex-wrap: wrap; gap: 8px; }
+  .taskActions { width: 100%; justify-content: flex-end; }
+  .taskActionBtn, .taskDelConfirm, .taskDelCancel { padding: 5px 10px; font-size: 12px; }
+
+  /* Detail modal */
+  .detailActions { flex-direction: column; align-items: stretch; }
+  .detailDoneBtn, .detailCloseBtn { text-align: center; padding: 10px 12px; font-size: 14px; }
 
   /* Quick-add stacks on very small screens */
   .quickAdd { flex-wrap: wrap; }
