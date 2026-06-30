@@ -5,6 +5,7 @@ import { useCollection } from '../../hooks/useCollection';
 import { COLLECTIONS } from '../../lib/firestore';
 import { classify } from '../../lib/classifier';
 import { uploadImages, formatBytes } from '../../lib/uploadImages';
+import { toast, dismissToast } from '../../lib/toast';
 import type { InboxItem } from '../../types';
 import styles from './QuickCapture.module.css';
 
@@ -18,16 +19,48 @@ interface ImageEntry {
   previewUrl: string;
 }
 
+type AddFn = (data: Omit<InboxItem, 'id' | 'createdAt' | 'updatedAt'>) => Promise<{ id: string }>;
+type UpdateFn = (id: string, data: Partial<InboxItem>) => Promise<unknown>;
+
+async function runCaptureSave(
+  payload: Omit<InboxItem, 'id' | 'createdAt' | 'updatedAt'>,
+  files: File[],
+  toastId: string,
+  add: AddFn,
+  update: UpdateFn,
+): Promise<void> {
+  toast({ id: toastId, message: 'Saving…', type: 'loading' });
+  try {
+    const docRef = await add(payload);
+    if (files.length > 0) {
+      try {
+        const attachments = await uploadImages(docRef.id, files);
+        await update(docRef.id, { imageAttachments: attachments } as Partial<InboxItem>);
+      } catch {
+        toast({ id: toastId, message: 'Text saved — image upload failed.', type: 'error' });
+        return;
+      }
+    }
+    toast({ id: toastId, message: 'Captured successfully.', type: 'success' });
+  } catch {
+    toast({
+      id: toastId,
+      message: 'Capture failed. Tap to retry.',
+      type: 'error',
+      onRetry: () => {
+        dismissToast(toastId);
+        void runCaptureSave(payload, files, toastId, add, update);
+      },
+    });
+  }
+}
+
 export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean }) {
   const [open, setOpen] = useState(false);
   const [rawInput, setRawInput] = useState('');
   const [body, setBody] = useState('');
   const [showDetails, setShowDetails] = useState(false);
   const [images, setImages] = useState<ImageEntry[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { add, update } = useCollection<InboxItem>(COLLECTIONS.INBOX);
 
@@ -47,31 +80,22 @@ export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean })
     return () => window.removeEventListener('megaapp:open-capture', handler as EventListener);
   }, []);
 
-  useEffect(() => () => {
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-  }, []);
-
   function revokeAll(entries: ImageEntry[]) {
     entries.forEach((e) => URL.revokeObjectURL(e.previewUrl));
   }
 
   function handleClose() {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     setImages((prev) => { revokeAll(prev); return []; });
     setOpen(false);
-    setSaved(false);
     setRawInput('');
     setBody('');
     setShowDetails(false);
-    setSaving(false);
-    setUploadError(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
-    // Reset input so the same file can be re-selected after removal
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (files.length === 0) return;
 
@@ -95,45 +119,28 @@ export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean })
     });
   }
 
-  async function handleSave() {
+  function handleSave() {
     const trimmed = rawInput.trim();
-    if (!trimmed || saving || saved) return;
-    setSaving(true);
-    setUploadError(null);
-    let hadUploadError = false;
-    try {
-      const docRef = await add({
-        title: trimmed,
-        rawInput: trimmed,
-        body: body.trim(),
-        type: 'unclassified',
-        possibleType: classification?.possibleType ?? 'unclassified',
-        confidence: classification?.confidence ?? 'low',
-        tags: classification?.tags ?? [],
-        contextType: 'general',
-        status: 'captured',
-        urgency: 'low',
-      } as Omit<InboxItem, 'id' | 'createdAt' | 'updatedAt'>);
+    if (!trimmed) return;
 
-      if (images.length > 0) {
-        try {
-          const attachments = await uploadImages(docRef.id, images.map((e) => e.file));
-          await update(docRef.id, { imageAttachments: attachments } as Partial<InboxItem>);
-        } catch {
-          hadUploadError = true;
-          setUploadError('Item saved — but image upload failed. Try again from Inbox.');
-        }
-      }
+    // Snapshot File objects before handleClose revokes the blob preview URLs
+    const captureFiles = images.map(e => e.file);
+    const payload = {
+      title: trimmed,
+      rawInput: trimmed,
+      body: body.trim(),
+      type: 'unclassified' as const,
+      possibleType: classification?.possibleType ?? 'unclassified',
+      confidence: classification?.confidence ?? 'low',
+      tags: classification?.tags ?? [],
+      contextType: 'general' as const,
+      status: 'captured' as const,
+      urgency: 'low' as const,
+    } as Omit<InboxItem, 'id' | 'createdAt' | 'updatedAt'>;
 
-      setSaved(true);
-      if (!hadUploadError) {
-        closeTimerRef.current = setTimeout(handleClose, 600);
-      }
-    } catch {
-      // Firestore error — let user retry
-    } finally {
-      setSaving(false);
-    }
+    // Close immediately — save continues in background
+    handleClose();
+    void runCaptureSave(payload, captureFiles, `capture-${Date.now()}`, add, update);
   }
 
   return (
@@ -194,7 +201,6 @@ export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean })
             />
           )}
 
-          {/* Image attachments */}
           <div className={styles.attachArea}>
             {images.length > 0 && (
               <div className={styles.thumbRow}>
@@ -237,10 +243,6 @@ export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean })
             />
           </div>
 
-          {uploadError && (
-            <p className={styles.uploadError}>{uploadError}</p>
-          )}
-
           <div className={styles.formBottom}>
             <button
               type="button"
@@ -251,16 +253,8 @@ export function QuickCapture({ hideTrigger = false }: { hideTrigger?: boolean })
             </button>
             <div className={styles.formActions}>
               <Btn variant="secondary" onClick={handleClose}>Cancel</Btn>
-              <Btn
-                onClick={handleSave}
-                disabled={!rawInput.trim() || saving || saved}
-                className={saved ? styles.savedBtn : ''}
-              >
-                {saved
-                  ? (uploadError ? '✓ Text saved' : '✓ Captured')
-                  : saving
-                    ? (images.length > 0 ? 'Uploading…' : 'Saving…')
-                    : 'Capture ↵'}
+              <Btn onClick={handleSave} disabled={!rawInput.trim()}>
+                Capture ↵
               </Btn>
             </div>
           </div>

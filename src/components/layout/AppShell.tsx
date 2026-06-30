@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar';
 import { MobileHeader, MobileBottomNav, MobileMoreMenu } from './MobileNav';
 import { QuickCapture } from '../capture/QuickCapture';
 import { CommandCenter } from '../commandCenter/CommandCenter';
+import { Toaster } from '../ui/Toaster';
 import { useMobile } from '../../hooks/useMobile';
 import styles from './AppShell.module.css';
 
@@ -22,6 +23,7 @@ export function AppShell() {
         <MobileMoreMenu open={moreOpen} onClose={() => setMoreOpen(false)} />
         <QuickCapture hideTrigger />
         <CommandCenter />
+        <Toaster />
       </div>
     );
   }
@@ -38,6 +40,7 @@ export function AppShell() {
         </div>
       </div>
       <CommandCenter />
+      <Toaster />
     </div>
   );
 }
